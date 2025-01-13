@@ -48,7 +48,6 @@ function WebGLPrograms( renderer, environments, extensions, capabilities, bindin
 	}
 
 	function getParameters( material, lights, shadows, scene, object ) {
-
 		const fog = scene.fog;
 		const geometry = object.geometry;
 		const environment = ( material.isMeshStandardMaterial || material.isMeshLambertMaterial || material.isMeshPhongMaterial ) ? scene.environment : null;
@@ -522,6 +521,8 @@ function WebGLPrograms( renderer, environments, extensions, capabilities, bindin
 			_programLayers.enable( 20 );
 		if ( parameters.gradientMap )
 			_programLayers.enable( 21 );
+		if ( parameters.batchingMatrix )
+			_programLayers.enable( 22 );
 
 		array.push( _programLayers.mask );
 		_programLayers.disableAll();

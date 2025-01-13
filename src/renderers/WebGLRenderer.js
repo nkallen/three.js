@@ -2346,6 +2346,14 @@ class WebGLRenderer {
 
 					needsProgramChange = true;
 
+				} else if (object.isBatchedMesh && materialProperties.batchingMatrix === false && object._matricesTexture !== null) {
+
+					needsProgramChange = true;
+
+				} else if (object.isBatchedMesh && materialProperties.batchingMatrix === true && object._matricesTexture === null) {
+
+					needsProgramChange = true;
+
 				} else if ( object.isInstancedMesh && materialProperties.instancing === false ) {
 
 					needsProgramChange = true;
