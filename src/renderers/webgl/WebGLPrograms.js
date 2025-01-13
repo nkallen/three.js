@@ -48,7 +48,6 @@ function WebGLPrograms( renderer, cubemaps, cubeuvmaps, extensions, capabilities
 	}
 
 	function getParameters( material, lights, shadows, scene, object ) {
-
 		const fog = scene.fog;
 		const geometry = object.geometry;
 		const environment = material.isMeshStandardMaterial ? scene.environment : null;
@@ -519,6 +518,8 @@ function WebGLPrograms( renderer, cubemaps, cubeuvmaps, extensions, capabilities
 			_programLayers.enable( 21 );
 		if ( parameters.gradientMap )
 			_programLayers.enable( 22 );
+		if ( parameters.batchingMatrix )
+			_programLayers.enable( 23 );
 
 		array.push( _programLayers.mask );
 		_programLayers.disableAll();
