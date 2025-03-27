@@ -16,7 +16,7 @@ export default /* glsl */`
 
 	// Normal Mapping Without Precomputed Tangents
 	// http://www.thetenthplanet.de/archives/1180
-
+	
 	mat3 getTangentFrame( vec3 eye_pos, vec3 surf_norm, vec2 uv ) {
 
 		vec3 q0 = dFdx( eye_pos.xyz );
@@ -40,4 +40,5 @@ export default /* glsl */`
 	}
 
 #endif
+
 `;
