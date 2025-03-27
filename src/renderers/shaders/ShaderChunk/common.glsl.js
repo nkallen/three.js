@@ -134,4 +134,86 @@ float F_Schlick( const in float f0, const in float f90, const in float dotVH ) {
 	return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
 
 } // validated
+
+#if defined( USE_MAP_TRIPLANAR ) || \
+  defined( USE_ALPHAMAP_TRIPLANAR ) || \
+  defined( USE_NORMALMAP_TRIPLANAR ) || \
+  defined( USE_ROUGHNESSMAP_TRIPLANAR ) || \
+  defined( USE_AOMAP_TRIPLANAR ) || \
+  defined( USE_METALNESSMAP_TRIPLANAR ) || \
+  defined( USE_CLEARCOAT_NORMALMAP_TRIPLANAR )
+
+  #define USE_TRIPLANAR
+
+#endif
+
+#if defined( USE_MAP_TRIPLANAR ) || \
+  defined( USE_ALPHAMAP_TRIPLANAR ) || \
+  defined( USE_ROUGHNESSMAP_TRIPLANAR ) || \
+  defined( USE_AOMAP_TRIPLANAR ) || \
+  defined( USE_METALNESSMAP_TRIPLANAR )
+
+  vec4 texture2DTriplanar( sampler2D map, mat3 uvTransform, vec3 coords, vec3 weights ) {
+    return weights.x * texture2D( map, (uvTransform * vec3(coords.zy, 1)).xy ) +
+           weights.y * texture2D( map, (uvTransform * vec3(coords.xz, 1)).xy ) +
+           weights.z * texture2D( map, (uvTransform * vec3(coords.xy, 1)).xy );
+  
+  }
+
+#endif
+
+#if defined( USE_NORMALMAP_TRIPLANAR ) || defined( USE_CLEARCOAT_NORMALMAP_TRIPLANAR )
+
+  vec3 texture2DTriplanarNormal( sampler2D normalMap, mat3 uvTransform, vec2 normalMapScale, vec3 normal, vec3 coords, vec3 weights ) {
+    // Whiteout blend
+  
+    // Triplanar uvs
+    vec2 uvX = coords.zy; // x facing plane
+    vec2 uvY = coords.xz; // y facing plane
+    vec2 uvZ = coords.xy; // z facing plane
+  
+    // Tangent space normal maps
+    vec3 tnormalX = texture2D( normalMap, (uvTransform * vec3(uvX, 1)).xy ).xyz * 2.0 - 1.0;
+    vec3 tnormalY = texture2D( normalMap, (uvTransform * vec3(uvY, 1)).xy ).xyz * 2.0 - 1.0;
+    vec3 tnormalZ = texture2D( normalMap, (uvTransform * vec3(uvZ, 1)).xy ).xyz * 2.0 - 1.0;
+
+    tnormalX.xy *= normalMapScale;
+    tnormalY.xy *= normalMapScale;
+    tnormalZ.xy *= normalMapScale;
+  
+    // Swizzle world normals into tangent space and apply Whiteout blend
+    tnormalX = vec3(
+        tnormalX.xy + normal.zy,
+        abs(tnormalX.z) * normal.x
+        );
+    tnormalY = vec3(
+        tnormalY.xy + normal.xz,
+        abs(tnormalY.z) * normal.y
+        );
+    tnormalZ = vec3(
+        tnormalZ.xy + normal.xy,
+        abs(tnormalZ.z) * normal.z
+        );
+    
+    // Swizzle tangent normals to match world orientation and triblend
+    return normalize(
+        tnormalX.zyx * weights.x +
+        tnormalY.xzy * weights.y +
+        tnormalZ.xyz * weights.z
+        );
+  }
+
+#endif
+
+#if defined( USE_MAP_CYLINDRICAL ) || \
+  defined( USE_ALPHAMAP_CYLINDRICAL ) || \
+  defined( USE_NORMALMAP_CYLINDRICAL ) || \
+  defined( USE_ROUGHNESSMAP_CYLINDRICAL ) || \
+  defined( USE_AOMAP_CYLINDRICAL ) || \
+  defined( USE_METALNESSMAP_CYLINDRICAL ) || \
+  defined( USE_CLEARCOAT_NORMALMAP_CYLINDRICAL )
+
+  #define USE_CYLINDRICAL
+
+#endif
 `;
