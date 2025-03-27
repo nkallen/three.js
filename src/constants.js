@@ -546,6 +546,9 @@ export const EquirectangularRefractionMapping = 304;
  */
 export const CubeUVReflectionMapping = 306;
 
+export const TriPlanarMapping = 307;
+export const CylindricalMapping = 308;
+
 /**
  * The texture will simply repeat to infinity.
  *

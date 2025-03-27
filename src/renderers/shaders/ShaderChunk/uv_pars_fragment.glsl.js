@@ -4,12 +4,37 @@ export default /* glsl */`
 	varying vec2 vUv;
 
 #endif
-#ifdef USE_MAP
+#if defined( USE_TRIPLANAR )
+
+uniform float triplanarHardness;
+
+#endif
+#if defined( USE_TRIPLANAR ) || defined( USE_CYLINDRICAL )
+
+	varying vec3 vModelPosition;
+
+#endif
+#if defined( USE_TRIPLANAR ) || defined( USE_CYLINDRICAL ) || (defined(USE_ANISOTROPY) && !defined(USE_UV1) && !defined(USE_UV2) && !defined(USE_UV3))
+
+	varying vec3 vModelNormal;
+  uniform mat4 texture3DMatrix;
+  uniform mat4 invTexture3DMatrix;
+
+#endif
+#if defined( USE_MAP_CYLINDRICAL ) || defined( USE_MAP_TRIPLANAR )
+
+	uniform mat3 mapTransform;
+
+#elif defined( USE_MAP_UV )
 
 	varying vec2 vMapUv;
 
 #endif
-#ifdef USE_ALPHAMAP
+#if defined( USE_ALPHAMAP_CYLINDRICAL ) || defined( USE_ALPHAMAP_TRIPLANAR )
+
+	uniform mat3 alphaMapTransform;
+
+#elif defined( USE_ALPHAMAP_UV )
 
 	varying vec2 vAlphaMapUv;
 
@@ -19,7 +44,11 @@ export default /* glsl */`
 	varying vec2 vLightMapUv;
 
 #endif
-#ifdef USE_AOMAP
+#if defined( USE_AOMAP_CYLINDRICAL ) || defined( USE_AOMAP_TRIPLANAR )
+
+	uniform mat3 aoMapTransform;
+
+#elif defined( USE_AOMAP_UV )
 
 	varying vec2 vAoMapUv;
 
@@ -29,7 +58,11 @@ export default /* glsl */`
 	varying vec2 vBumpMapUv;
 
 #endif
-#ifdef USE_NORMALMAP
+#if defined( USE_NORMALMAP_CYLINDRICAL ) || defined( USE_NORMALMAP_TRIPLANAR )
+
+	uniform mat3 normalMapTransform;
+
+#elif defined( USE_NORMALMAP_UV )
 
 	varying vec2 vNormalMapUv;
 
@@ -39,12 +72,20 @@ export default /* glsl */`
 	varying vec2 vEmissiveMapUv;
 
 #endif
-#ifdef USE_METALNESSMAP
+#if defined( USE_METALNESSMAP_CYLINDRICAL ) || defined( USE_METALNESSMAP_TRIPLANAR )
+
+	uniform mat3 metalnessMapTransform;
+
+#elif defined( USE_METALNESSMAP_UV )
 
 	varying vec2 vMetalnessMapUv;
 
 #endif
-#ifdef USE_ROUGHNESSMAP
+#if defined( USE_ROUGHNESSMAP_CYLINDRICAL ) || defined( USE_ROUGHNESSMAP_TRIPLANAR )
+
+	uniform mat3 roughnessMapTransform;
+
+#elif defined( USE_ROUGHNESSMAP_UV )
 
 	varying vec2 vRoughnessMapUv;
 
@@ -59,7 +100,11 @@ export default /* glsl */`
 	varying vec2 vClearcoatMapUv;
 
 #endif
-#ifdef USE_CLEARCOAT_NORMALMAP
+#if defined( USE_CLEARCOAT_NORMALMAP_CYLINDRICAL ) || defined( USE_CLEARCOAT_NORMALMAP_TRIPLANAR )
+
+	uniform mat3 clearcoatNormalMapTransform;
+
+#elif defined( USE_CLEARCOAT_NORMALMAP_UV )
 
 	varying vec2 vClearcoatNormalMapUv;
 

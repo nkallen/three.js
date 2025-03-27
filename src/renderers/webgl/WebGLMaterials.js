@@ -153,6 +153,18 @@ function WebGLMaterials( renderer, properties ) {
 
 		}
 
+    if ( material.texture3DMatrix ) {
+
+      uniforms.texture3DMatrix.value.copy( material.texture3DMatrix );
+
+    }
+
+    if ( material.triplanarHardness ) {
+
+      uniforms.triplanarHardness.value = material.triplanarHardness;
+
+    }
+
 		if ( material.alphaMap ) {
 
 			uniforms.alphaMap.value = material.alphaMap;

@@ -5,6 +5,8 @@ import {
 	EquirectangularReflectionMapping,
 	EquirectangularRefractionMapping,
 	CubeUVReflectionMapping,
+	TriPlanarMapping,
+	CylindricalMapping,
 
 	RepeatWrapping,
 	ClampToEdgeWrapping,
@@ -1262,7 +1264,9 @@ const TEXTURE_MAPPING = {
 	CubeRefractionMapping: CubeRefractionMapping,
 	EquirectangularReflectionMapping: EquirectangularReflectionMapping,
 	EquirectangularRefractionMapping: EquirectangularRefractionMapping,
-	CubeUVReflectionMapping: CubeUVReflectionMapping
+	CubeUVReflectionMapping: CubeUVReflectionMapping,
+	TriPlanarMapping: TriPlanarMapping,
+	CylindricalMapping: CylindricalMapping
 };
 
 const TEXTURE_WRAPPING = {
