@@ -4,13 +4,31 @@ export default /* glsl */`
 	varying vec2 vUv;
 
 #endif
-#ifdef USE_MAP
+#if defined( USE_TRIPLANAR ) || defined( USE_CYLINDRICAL ) || ( defined(USE_ANISOTROPY) && !defined(USE_UV1) && !defined(USE_UV2) && !defined(USE_UV3) )
+
+	uniform mat4 texture3DMatrix;
+
+#endif
+#if defined( USE_TRIPLANAR ) || defined( USE_CYLINDRICAL )
+
+	varying vec3 vModelPosition;
+
+#endif
+#if defined( USE_TRIPLANAR ) || ( defined(USE_ANISOTROPY) && !defined(USE_UV1) && !defined(USE_UV2) && !defined(USE_UV3) )
+
+	varying vec3 vModelNormal;
+
+#endif
+#if defined( USE_CYLINDRICAL )
+
+#endif
+#if defined( USE_MAP_UV )
 
 	uniform mat3 mapTransform;
 	varying vec2 vMapUv;
 
 #endif
-#ifdef USE_ALPHAMAP
+#if defined( USE_ALPHAMAP_UV )
 
 	uniform mat3 alphaMapTransform;
 	varying vec2 vAlphaMapUv;
@@ -22,7 +40,7 @@ export default /* glsl */`
 	varying vec2 vLightMapUv;
 
 #endif
-#ifdef USE_AOMAP
+#if defined( USE_AOMAP_UV )
 
 	uniform mat3 aoMapTransform;
 	varying vec2 vAoMapUv;
@@ -34,7 +52,7 @@ export default /* glsl */`
 	varying vec2 vBumpMapUv;
 
 #endif
-#ifdef USE_NORMALMAP
+#if defined( USE_NORMALMAP_UV )
 
 	uniform mat3 normalMapTransform;
 	varying vec2 vNormalMapUv;
@@ -52,13 +70,13 @@ export default /* glsl */`
 	varying vec2 vEmissiveMapUv;
 
 #endif
-#ifdef USE_METALNESSMAP
+#if defined( USE_METALNESSMAP_UV )
 
 	uniform mat3 metalnessMapTransform;
 	varying vec2 vMetalnessMapUv;
 
 #endif
-#ifdef USE_ROUGHNESSMAP
+#if defined( USE_ROUGHNESSMAP_UV )
 
 	uniform mat3 roughnessMapTransform;
 	varying vec2 vRoughnessMapUv;
@@ -142,4 +160,5 @@ export default /* glsl */`
 	varying vec2 vThicknessMapUv;
 
 #endif
+
 `;

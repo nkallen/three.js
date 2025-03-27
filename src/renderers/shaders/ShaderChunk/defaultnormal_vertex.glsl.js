@@ -6,6 +6,11 @@ vec3 transformedNormal = objectNormal;
 	vec3 transformedTangent = objectTangent;
 
 #endif
+#if defined( USE_TANGENT_FROM_NORMAL ) || defined( USE_NORMALMAP_TRIPLANAR )
+
+  mat3 tangentMatrix = mat3(1.0);
+
+#endif
 
 #ifdef USE_BATCHING
 
@@ -20,7 +25,12 @@ vec3 transformedNormal = objectNormal;
 
 		transformedTangent = bm * transformedTangent;
 
-	#endif
+  #endif
+  #if defined( USE_TANGENT_FROM_NORMAL ) || defined( USE_NORMALMAP_TRIPLANAR )
+
+    tangentMatrix = bm * tangentMatrix;
+
+  #endif
 
 #endif
 
@@ -37,7 +47,12 @@ vec3 transformedNormal = objectNormal;
 
 		transformedTangent = im * transformedTangent;
 
-	#endif
+  #endif
+  #if defined( USE_TANGENT_FROM_NORMAL ) || defined( USE_NORMALMAP_TRIPLANAR )
+
+    tangentMatrix = im * tangentMatrix;
+
+  #endif
 
 #endif
 
@@ -58,6 +73,11 @@ transformedNormal = normalMatrix * transformedNormal;
 		transformedTangent = - transformedTangent;
 
 	#endif
+
+#endif
+#if defined( USE_TANGENT_FROM_NORMAL ) || defined( USE_NORMALMAP_TRIPLANAR )
+
+  tangentMatrix = mat3( modelViewMatrix ) * tangentMatrix;
 
 #endif
 `;
