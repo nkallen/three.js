@@ -1,7 +1,18 @@
 export default /* glsl */`
 #ifdef USE_MAP
 
-	vec4 sampledDiffuseColor = texture2D( map, vMapUv );
+	#ifdef USE_MAP_TRIPLANAR
+
+		vec4 sampledDiffuseColor = texture2DTriplanar( map, mapTransform, triplanarCoords, triplanarWeights );
+
+	#else
+    #if defined( USE_MAP_CYLINDRICAL )
+      vec2 vMapUv = ( mapTransform * vec3( positionBasedUv, 1 ) ).xy;
+    #endif
+
+		vec4 sampledDiffuseColor = texture2D( map, vMapUv );
+
+	#endif
 
 	#ifdef DECODE_VIDEO_TEXTURE
 

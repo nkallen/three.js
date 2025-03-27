@@ -59,6 +59,7 @@ import logdepthbuf_pars_fragment from './ShaderChunk/logdepthbuf_pars_fragment.g
 import logdepthbuf_pars_vertex from './ShaderChunk/logdepthbuf_pars_vertex.glsl.js';
 import logdepthbuf_vertex from './ShaderChunk/logdepthbuf_vertex.glsl.js';
 import map_fragment from './ShaderChunk/map_fragment.glsl.js';
+import triplanar_fragment from './ShaderChunk/triplanar_fragment.glsl.js';
 import map_pars_fragment from './ShaderChunk/map_pars_fragment.glsl.js';
 import map_particle_fragment from './ShaderChunk/map_particle_fragment.glsl.js';
 import map_particle_pars_fragment from './ShaderChunk/map_particle_pars_fragment.glsl.js';
@@ -186,6 +187,7 @@ export const ShaderChunk = {
 	logdepthbuf_pars_vertex: logdepthbuf_pars_vertex,
 	logdepthbuf_vertex: logdepthbuf_vertex,
 	map_fragment: map_fragment,
+	triplanar_fragment: triplanar_fragment,
 	map_pars_fragment: map_pars_fragment,
 	map_particle_fragment: map_particle_fragment,
 	map_particle_pars_fragment: map_particle_pars_fragment,
