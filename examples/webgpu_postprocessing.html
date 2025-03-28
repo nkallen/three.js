@@ -11,7 +11,8 @@
 			{
 				"imports": {
 					"three": "../build/three.webgpu.js",
-					"three/tsl": "../build/three.webgpu.js",
+					"three/webgpu": "../build/three.webgpu.js",
+					"three/tsl": "../build/three.tsl.js",
 					"three/addons/": "./jsm/"
 				}
 			}
@@ -21,6 +22,8 @@
 
 			import * as THREE from 'three';
 			import { pass } from 'three/tsl';
+			import { dotScreen } from 'three/addons/tsl/display/DotScreenNode.js';
+			import { rgbShift } from 'three/addons/tsl/display/RGBShiftNode.js';
 
 			let camera, renderer, postProcessing;
 			let object;
@@ -73,10 +76,10 @@
 				const scenePass = pass( scene, camera );
 				const scenePassColor = scenePass.getTextureNode();
 
-				const dotScreenPass = scenePassColor.dotScreen();
+				const dotScreenPass = dotScreen( scenePassColor );
 				dotScreenPass.scale.value = 0.3;
 
-				const rgbShiftPass = dotScreenPass.rgbShift();
+				const rgbShiftPass = rgbShift( dotScreenPass );
 				rgbShiftPass.amount.value = 0.001;
 
 				postProcessing.outputNode = rgbShiftPass;

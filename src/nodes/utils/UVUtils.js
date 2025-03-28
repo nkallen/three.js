@@ -1,12 +1,33 @@
-import { addNodeElement, Fn, vec2 } from '../shadernode/ShaderNode.js';
+import { Fn, vec2 } from '../tsl/TSLBase.js';
+import { rotate } from './RotateNode.js';
 
-export const rotateUV = Fn( ( [ uv, rotation, center = vec2( 0.5 ) ] ) => {
+/**
+ * Rotates the given uv coordinates around a center point
+ *
+ * @tsl
+ * @function
+ * @param {Node<vec2>} uv - The uv coordinates.
+ * @param {Node<float>} rotation - The rotation defined in radians.
+ * @param {Node<vec2>} center - The center of rotation
+ * @return {Node<vec2>} The rotated uv coordinates.
+ */
+export const rotateUV = /*@__PURE__*/ Fn( ( [ uv, rotation, center = vec2( 0.5 ) ] ) => {
 
-	return uv.sub( center ).rotate( rotation ).add( center );
+	return rotate( uv.sub( center ), rotation ).add( center );
 
 } );
 
-export const spherizeUV = Fn( ( [ uv, strength, center = vec2( 0.5 ) ] ) => {
+/**
+ * Applies a spherical warping effect to the given uv coordinates.
+ *
+ * @tsl
+ * @function
+ * @param {Node<vec2>} uv - The uv coordinates.
+ * @param {Node<float>} strength - The strength of the effect.
+ * @param {Node<vec2>} center - The center point
+ * @return {Node<vec2>} The updated uv coordinates.
+ */
+export const spherizeUV = /*@__PURE__*/ Fn( ( [ uv, strength, center = vec2( 0.5 ) ] ) => {
 
 	const delta = uv.sub( center );
 	const delta2 = delta.dot( delta );
@@ -16,6 +37,3 @@ export const spherizeUV = Fn( ( [ uv, strength, center = vec2( 0.5 ) ] ) => {
 	return uv.add( delta.mul( deltaOffset ) );
 
 } );
-
-addNodeElement( 'rotateUV', rotateUV );
-addNodeElement( 'spherizeUV', spherizeUV );

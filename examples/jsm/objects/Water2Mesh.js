@@ -1,11 +1,14 @@
 import {
 	Color,
 	Mesh,
-	NodeMaterial,
 	Vector2,
-	Vector3
-} from 'three';
-import { vec2, viewportSafeUV, viewportSharedTexture, reflector, pow, float, abs, texture, uniform, TempNode, NodeUpdateType, vec4, tslFn, cameraPosition, positionWorld, uv, mix, vec3, normalize, max, dot, viewportTopLeft } from 'three/tsl';
+	Vector3,
+	NodeMaterial,
+	NodeUpdateType,
+	TempNode
+} from 'three/webgpu';
+
+import { Fn, vec2, viewportSafeUV, viewportSharedTexture, reflector, pow, float, abs, texture, uniform, vec4, cameraPosition, positionWorld, uv, mix, vec3, normalize, max, dot, screenUV } from 'three/tsl';
 
 /**
  * References:
@@ -24,7 +27,6 @@ class WaterMesh extends Mesh {
 
 		this.isWater = true;
 
-		material.normals = false;
 		material.fragmentNode = new WaterNode( options, this );
 
 	}
@@ -91,7 +93,7 @@ class WaterNode extends TempNode {
 
 	setup() {
 
-		const outputNode = tslFn( () => {
+		const outputNode = Fn( () => {
 
 			const flowMapOffset0 = this.flowConfig.x;
 			const flowMapOffset1 = this.flowConfig.y;
@@ -120,8 +122,8 @@ class WaterNode extends TempNode {
 			const normalUv0 = uvs.mul( this.scale ).add( flow.mul( flowMapOffset0 ) );
 			const normalUv1 = uvs.mul( this.scale ).add( flow.mul( flowMapOffset1 ) );
 
-			const normalColor0 = this.normalMap0.uv( normalUv0 );
-			const normalColor1 = this.normalMap1.uv( normalUv1 );
+			const normalColor0 = this.normalMap0.sample( normalUv0 );
+			const normalColor1 = this.normalMap1.sample( normalUv1 );
 
 			// linear interpolate to get the final normal color
 			const flowLerp = abs( halfCycle.sub( flowMapOffset0 ) ).div( halfCycle );
@@ -142,7 +144,7 @@ class WaterNode extends TempNode {
 			this.waterBody.add( reflectionSampler.target );
 			reflectionSampler.uvNode = reflectionSampler.uvNode.add( offset );
 
-			const refractorUV = viewportTopLeft.add( offset );
+			const refractorUV = screenUV.add( offset );
 			const refractionSampler = viewportSharedTexture( viewportSafeUV( refractorUV ) );
 
 			// calculate final uv coords

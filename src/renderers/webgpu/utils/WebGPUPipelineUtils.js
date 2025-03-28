@@ -15,20 +15,48 @@ import {
 	NeverStencilFunc, AlwaysStencilFunc, LessStencilFunc, LessEqualStencilFunc, EqualStencilFunc, GreaterEqualStencilFunc, GreaterStencilFunc, NotEqualStencilFunc
 } from '../../../constants.js';
 
+/**
+ * A WebGPU backend utility module for managing pipelines.
+ *
+ * @private
+ */
 class WebGPUPipelineUtils {
 
+	/**
+	 * Constructs a new utility object.
+	 *
+	 * @param {WebGPUBackend} backend - The WebGPU backend.
+	 */
 	constructor( backend ) {
 
+		/**
+		 * A reference to the WebGPU backend.
+		 *
+		 * @type {WebGPUBackend}
+		 */
 		this.backend = backend;
 
 	}
 
-	_getSampleCount( renderObjectContext ) {
+	/**
+	 * Returns the sample count derived from the given render context.
+	 *
+	 * @private
+	 * @param {RenderContext} renderContext - The render context.
+	 * @return {number} The sample count.
+	 */
+	_getSampleCount( renderContext ) {
 
-		return this.backend.utils.getSampleCountRenderContext( renderObjectContext );
+		return this.backend.utils.getSampleCountRenderContext( renderContext );
 
 	}
 
+	/**
+	 * Creates a render pipeline for the given render object.
+	 *
+	 * @param {RenderObject} renderObject - The render object.
+	 * @param {Array<Promise>} promises - An array of compilation promises which are used in `compileAsync()`.
+	 */
 	createRenderPipeline( renderObject, promises ) {
 
 		const { object, material, geometry, pipeline } = renderObject;
@@ -123,27 +151,55 @@ class WebGPUPipelineUtils {
 		const sampleCount = this._getSampleCount( renderObject.context );
 
 		const pipelineDescriptor = {
-			label: 'renderPipeline',
+			label: `renderPipeline_${ material.name || material.type }_${ material.id }`,
 			vertex: Object.assign( {}, vertexModule, { buffers: vertexBuffers } ),
 			fragment: Object.assign( {}, fragmentModule, { targets } ),
 			primitive: primitiveState,
-			depthStencil: {
-				format: depthStencilFormat,
-				depthWriteEnabled: material.depthWrite,
-				depthCompare: depthCompare,
-				stencilFront: stencilFront,
-				stencilBack: {}, // three.js does not provide an API to configure the back function (gl.stencilFuncSeparate() was never used)
-				stencilReadMask: material.stencilFuncMask,
-				stencilWriteMask: material.stencilWriteMask
-			},
 			multisample: {
 				count: sampleCount,
-				alphaToCoverageEnabled: material.alphaToCoverage
+				alphaToCoverageEnabled: material.alphaToCoverage && sampleCount > 1
 			},
 			layout: device.createPipelineLayout( {
 				bindGroupLayouts
 			} )
 		};
+
+
+		const depthStencil = {};
+		const renderDepth = renderObject.context.depth;
+		const renderStencil = renderObject.context.stencil;
+
+		if ( renderDepth === true || renderStencil === true ) {
+
+			if ( renderDepth === true ) {
+
+				depthStencil.format = depthStencilFormat;
+				depthStencil.depthWriteEnabled = material.depthWrite;
+				depthStencil.depthCompare = depthCompare;
+
+			}
+
+			if ( renderStencil === true ) {
+
+				depthStencil.stencilFront = stencilFront;
+				depthStencil.stencilBack = {}; // three.js does not provide an API to configure the back function (gl.stencilFuncSeparate() was never used)
+				depthStencil.stencilReadMask = material.stencilFuncMask;
+				depthStencil.stencilWriteMask = material.stencilWriteMask;
+
+			}
+
+			if ( material.polygonOffset === true ) {
+
+				depthStencil.depthBias = material.polygonOffsetUnits;
+				depthStencil.depthBiasSlopeScale = material.polygonOffsetFactor;
+				depthStencil.depthBiasClamp = 0; // three.js does not provide an API to configure this value
+
+			}
+
+			pipelineDescriptor.depthStencil = depthStencil;
+
+		}
+
 
 		if ( promises === null ) {
 
@@ -168,17 +224,20 @@ class WebGPUPipelineUtils {
 
 	}
 
-	createBundleEncoder( renderContext, renderObject ) {
+	/**
+	 * Creates GPU render bundle encoder for the given render context.
+	 *
+	 * @param {RenderContext} renderContext - The render context.
+	 * @return {GPURenderBundleEncoder} The GPU render bundle encoder.
+	 */
+	createBundleEncoder( renderContext ) {
 
 		const backend = this.backend;
 		const { utils, device } = backend;
 
-		const renderContextData = backend.get( renderContext );
-		const renderObjectData = backend.get( renderObject );
-
 		const depthStencilFormat = utils.getCurrentDepthStencilFormat( renderContext );
 		const colorFormat = utils.getCurrentColorFormat( renderContext );
-		const sampleCount = this._getSampleCount( renderObject.context );
+		const sampleCount = this._getSampleCount( renderContext );
 
 		const descriptor = {
 			label: 'renderBundleEncoder',
@@ -187,16 +246,16 @@ class WebGPUPipelineUtils {
 			sampleCount
 		};
 
-		const bundleEncoder = device.createRenderBundleEncoder( descriptor );
-
-		renderObjectData.bundleEncoder = bundleEncoder;
-		renderContextData.currentSets = { attributes: {} };
-		renderContextData._renderBundleViewport = renderContext.width + '_' + renderContext.height;
-
-		return bundleEncoder;
+		return device.createRenderBundleEncoder( descriptor );
 
 	}
 
+	/**
+	 * Creates a compute pipeline for the given compute node.
+	 *
+	 * @param {ComputePipeline} pipeline - The compute pipeline.
+	 * @param {Array<BindGroup>} bindings - The bindings.
+	 */
 	createComputePipeline( pipeline, bindings ) {
 
 		const backend = this.backend;
@@ -227,6 +286,14 @@ class WebGPUPipelineUtils {
 
 	}
 
+	/**
+	 * Returns the blending state as a descriptor object required
+	 * for the pipeline creation.
+	 *
+	 * @private
+	 * @param {Material} material - The material.
+	 * @return {Object} The blending state.
+	 */
 	_getBlending( material ) {
 
 		let color, alpha;
@@ -280,11 +347,11 @@ class WebGPUPipelineUtils {
 				switch ( blending ) {
 
 					case NormalBlending:
-						setBlend( GPUBlendFactor.SrcAlpha, GPUBlendFactor.OneMinusSrcAlpha, GPUBlendFactor.One, GPUBlendFactor.OneMinusSrcAlpha );
+						setBlend( GPUBlendFactor.One, GPUBlendFactor.OneMinusSrcAlpha, GPUBlendFactor.One, GPUBlendFactor.OneMinusSrcAlpha );
 						break;
 
 					case AdditiveBlending:
-						setBlend( GPUBlendFactor.SrcAlpha, GPUBlendFactor.One, GPUBlendFactor.One, GPUBlendFactor.One );
+						setBlend( GPUBlendFactor.One, GPUBlendFactor.One, GPUBlendFactor.One, GPUBlendFactor.One );
 						break;
 
 					case SubtractiveBlending:
@@ -334,7 +401,13 @@ class WebGPUPipelineUtils {
 		}
 
 	}
-
+	/**
+	 * Returns the GPU blend factor which is required for the pipeline creation.
+	 *
+	 * @private
+	 * @param {number} blend - The blend factor as a three.js constant.
+	 * @return {string} The GPU blend factor.
+	 */
 	_getBlendFactor( blend ) {
 
 		let blendFactor;
@@ -402,6 +475,13 @@ class WebGPUPipelineUtils {
 
 	}
 
+	/**
+	 * Returns the GPU stencil compare function which is required for the pipeline creation.
+	 *
+	 * @private
+	 * @param {Material} material - The material.
+	 * @return {string} The GPU stencil compare function.
+	 */
 	_getStencilCompare( material ) {
 
 		let stencilCompare;
@@ -451,6 +531,13 @@ class WebGPUPipelineUtils {
 
 	}
 
+	/**
+	 * Returns the GPU stencil operation which is required for the pipeline creation.
+	 *
+	 * @private
+	 * @param {number} op - A three.js constant defining the stencil operation.
+	 * @return {string} The GPU stencil operation.
+	 */
 	_getStencilOperation( op ) {
 
 		let stencilOperation;
@@ -498,6 +585,13 @@ class WebGPUPipelineUtils {
 
 	}
 
+	/**
+	 * Returns the GPU blend operation which is required for the pipeline creation.
+	 *
+	 * @private
+	 * @param {number} blendEquation - A three.js constant defining the blend equation.
+	 * @return {string} The GPU blend operation.
+	 */
 	_getBlendOperation( blendEquation ) {
 
 		let blendOperation;
@@ -533,6 +627,16 @@ class WebGPUPipelineUtils {
 
 	}
 
+	/**
+	 * Returns the primitive state as a descriptor object required
+	 * for the pipeline creation.
+	 *
+	 * @private
+	 * @param {Object3D} object - The 3D object.
+	 * @param {BufferGeometry} geometry - The geometry.
+	 * @param {Material} material - The material.
+	 * @return {Object} The primitive state.
+	 */
 	_getPrimitiveState( object, geometry, material ) {
 
 		const descriptor = {};
@@ -573,12 +677,26 @@ class WebGPUPipelineUtils {
 
 	}
 
+	/**
+	 * Returns the GPU color write mask which is required for the pipeline creation.
+	 *
+	 * @private
+	 * @param {Material} material - The material.
+	 * @return {string} The GPU color write mask.
+	 */
 	_getColorWriteMask( material ) {
 
 		return ( material.colorWrite === true ) ? GPUColorWriteFlags.All : GPUColorWriteFlags.None;
 
 	}
 
+	/**
+	 * Returns the GPU depth compare function which is required for the pipeline creation.
+	 *
+	 * @private
+	 * @param {Material} material - The material.
+	 * @return {string} The GPU depth compare function.
+	 */
 	_getDepthCompare( material ) {
 
 		let depthCompare;

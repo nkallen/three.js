@@ -1,7 +1,7 @@
 import { equirectUV } from '../../nodes/utils/EquirectUVNode.js';
 import { texture as TSL_Texture } from '../../nodes/accessors/TextureNode.js';
-import { positionWorldDirection } from '../../nodes/accessors/PositionNode.js';
-import { createNodeMaterialFromType } from '../../nodes/materials/NodeMaterial.js';
+import { positionWorldDirection } from '../../nodes/accessors/Position.js';
+import NodeMaterial from '../../materials/nodes/NodeMaterial.js';
 
 import { WebGLCubeRenderTarget } from '../../renderers/WebGLCubeRenderTarget.js';
 import { Scene } from '../../scenes/Scene.js';
@@ -12,6 +12,12 @@ import { BackSide, NoBlending, LinearFilter, LinearMipmapLinearFilter } from '..
 
 // @TODO: Consider rename WebGLCubeRenderTarget to just CubeRenderTarget
 
+/**
+ * This class represents a cube render target. It is a special version
+ * of `WebGLCubeRenderTarget` which is compatible with `WebGPURenderer`.
+ *
+ * @augments WebGLCubeRenderTarget
+ */
 class CubeRenderTarget extends WebGLCubeRenderTarget {
 
 	constructor( size = 1, options = {} ) {
@@ -22,6 +28,13 @@ class CubeRenderTarget extends WebGLCubeRenderTarget {
 
 	}
 
+	/**
+	 * Converts the given equirectangular texture to a cube map.
+	 *
+	 * @param {Renderer} renderer - The renderer.
+	 * @param {Texture} texture - The equirectangular texture.
+	 * @return {CubeRenderTarget} A reference to this cube render target.
+	 */
 	fromEquirectangularTexture( renderer, texture ) {
 
 		const currentMinFilter = texture.minFilter;
@@ -40,7 +53,7 @@ class CubeRenderTarget extends WebGLCubeRenderTarget {
 
 		const uvNode = equirectUV( positionWorldDirection );
 
-		const material = createNodeMaterialFromType( 'MeshBasicNodeMaterial' );
+		const material = new NodeMaterial();
 		material.colorNode = TSL_Texture( texture, uvNode, 0 );
 		material.side = BackSide;
 		material.blending = NoBlending;
@@ -54,7 +67,13 @@ class CubeRenderTarget extends WebGLCubeRenderTarget {
 		if ( texture.minFilter === LinearMipmapLinearFilter ) texture.minFilter = LinearFilter;
 
 		const camera = new CubeCamera( 1, 10, this );
+
+		const currentMRT = renderer.getMRT();
+		renderer.setMRT( null );
+
 		camera.update( renderer, scene );
+
+		renderer.setMRT( currentMRT );
 
 		texture.minFilter = currentMinFilter;
 		texture.currentGenerateMipmaps = currentGenerateMipmaps;

@@ -1,9 +1,28 @@
 import TempNode from '../core/TempNode.js';
-import { addNodeClass } from '../core/Node.js';
-import { addNodeElement, nodeProxy } from '../shadernode/ShaderNode.js';
+import { addMethodChaining, nodeProxy } from '../tsl/TSLCore.js';
 
+/**
+ * This node represents basic mathematical and logical operations like addition,
+ * subtraction or comparisons (e.g. `equal()`).
+ *
+ * @augments TempNode
+ */
 class OperatorNode extends TempNode {
 
+	static get type() {
+
+		return 'OperatorNode';
+
+	}
+
+	/**
+	 * Constructs a new operator node.
+	 *
+	 * @param {string} op - The operator.
+	 * @param {Node} aNode - The first input.
+	 * @param {Node} bNode - The second input.
+	 * @param {...Node} params - Additional input parameters.
+	 */
 	constructor( op, aNode, bNode, ...params ) {
 
 		super();
@@ -23,12 +42,46 @@ class OperatorNode extends TempNode {
 
 		}
 
+		/**
+		 * The operator.
+		 *
+		 * @type {string}
+		 */
 		this.op = op;
+
+		/**
+		 * The first input.
+		 *
+		 * @type {Node}
+		 */
 		this.aNode = aNode;
+
+		/**
+		 * The second input.
+		 *
+		 * @type {Node}
+		 */
 		this.bNode = bNode;
+
+		/**
+		 * This flag can be used for type testing.
+		 *
+		 * @type {boolean}
+		 * @readonly
+		 * @default true
+		 */
+		this.isOperatorNode = true;
 
 	}
 
+	/**
+	 * This method is overwritten since the node type is inferred from the operator
+	 * and the input node types.
+	 *
+	 * @param {NodeBuilder} builder - The current node builder.
+	 * @param {string} output - The current output string.
+	 * @return {string} The node type.
+	 */
 	getNodeType( builder, output ) {
 
 		const op = this.op;
@@ -63,23 +116,39 @@ class OperatorNode extends TempNode {
 
 		} else {
 
-			if ( typeA === 'float' && builder.isMatrix( typeB ) ) {
+			// Handle matrix operations
+			if ( builder.isMatrix( typeA ) ) {
 
-				return typeB;
+				if ( typeB === 'float' ) {
 
-			} else if ( builder.isMatrix( typeA ) && builder.isVector( typeB ) ) {
+					return typeA; // matrix * scalar = matrix
 
-				// matrix x vector
+				} else if ( builder.isVector( typeB ) ) {
 
-				return builder.getVectorFromMatrix( typeA );
+					return builder.getVectorFromMatrix( typeA ); // matrix * vector
 
-			} else if ( builder.isVector( typeA ) && builder.isMatrix( typeB ) ) {
+				} else if ( builder.isMatrix( typeB ) ) {
 
-				// vector x matrix
+					return typeA; // matrix * matrix
 
-				return builder.getVectorFromMatrix( typeB );
+				}
 
-			} else if ( builder.getTypeLength( typeB ) > builder.getTypeLength( typeA ) ) {
+			} else if ( builder.isMatrix( typeB ) ) {
+
+				if ( typeA === 'float' ) {
+
+					return typeB; // scalar * matrix = matrix
+
+				} else if ( builder.isVector( typeA ) ) {
+
+					return builder.getVectorFromMatrix( typeB ); // vector * matrix
+
+				}
+
+			}
+
+			// Handle non-matrix cases
+			if ( builder.getTypeLength( typeB ) > builder.getTypeLength( typeA ) ) {
 
 				// anytype x anytype: use the greater length vector
 
@@ -116,7 +185,7 @@ class OperatorNode extends TempNode {
 
 					typeB = typeA;
 
-				} else {
+				} else if ( typeA !== typeB ) {
 
 					typeA = typeB = 'float';
 
@@ -127,17 +196,43 @@ class OperatorNode extends TempNode {
 				typeA = type;
 				typeB = builder.changeComponentType( typeB, 'uint' );
 
-			} else if ( builder.isMatrix( typeA ) && builder.isVector( typeB ) ) {
+			} else if ( builder.isMatrix( typeA ) ) {
 
-				// matrix x vector
+				if ( typeB === 'float' ) {
 
-				typeB = builder.getVectorFromMatrix( typeA );
+					// Keep matrix type for typeA, but ensure typeB stays float
+					typeB = 'float';
 
-			} else if ( builder.isVector( typeA ) && builder.isMatrix( typeB ) ) {
+				} else if ( builder.isVector( typeB ) ) {
 
-				// vector x matrix
+					// matrix x vector
+					typeB = builder.getVectorFromMatrix( typeA );
 
-				typeA = builder.getVectorFromMatrix( typeB );
+				} else if ( builder.isMatrix( typeB ) ) {
+					// matrix x matrix - keep both types
+				} else {
+
+					typeA = typeB = type;
+
+				}
+
+			} else if ( builder.isMatrix( typeB ) ) {
+
+				if ( typeA === 'float' ) {
+
+					// Keep matrix type for typeB, but ensure typeA stays float
+					typeA = 'float';
+
+				} else if ( builder.isVector( typeA ) ) {
+
+					// vector x matrix
+					typeA = builder.getVectorFromMatrix( typeB );
+
+				} else {
+
+					typeA = typeB = type;
+
+				}
 
 			} else {
 
@@ -219,7 +314,20 @@ class OperatorNode extends TempNode {
 
 			} else {
 
-				return builder.format( `( ${ a } ${ op } ${ b } )`, type, output );
+				// Handle matrix operations
+				if ( builder.isMatrix( typeA ) && typeB === 'float' ) {
+
+					return builder.format( `( ${ b } ${ op } ${ a } )`, type, output );
+
+				} else if ( typeA === 'float' && builder.isMatrix( typeB ) ) {
+
+					return builder.format( `${ a } ${ op } ${ b }`, type, output );
+
+				} else {
+
+					return builder.format( `( ${ a } ${ op } ${ b } )`, type, output );
+
+				}
 
 			}
 
@@ -231,7 +339,15 @@ class OperatorNode extends TempNode {
 
 			} else {
 
-				return builder.format( `${ a } ${ op } ${ b }`, type, output );
+				if ( builder.isMatrix( typeA ) && typeB === 'float' ) {
+
+					return builder.format( `${ b } ${ op } ${ a }`, type, output );
+
+				} else {
+
+					return builder.format( `${ a } ${ op } ${ b }`, type, output );
+
+				}
 
 			}
 
@@ -259,48 +375,276 @@ class OperatorNode extends TempNode {
 
 export default OperatorNode;
 
-export const add = nodeProxy( OperatorNode, '+' );
-export const sub = nodeProxy( OperatorNode, '-' );
-export const mul = nodeProxy( OperatorNode, '*' );
-export const div = nodeProxy( OperatorNode, '/' );
-export const remainder = nodeProxy( OperatorNode, '%' );
-export const equal = nodeProxy( OperatorNode, '==' );
-export const notEqual = nodeProxy( OperatorNode, '!=' );
-export const lessThan = nodeProxy( OperatorNode, '<' );
-export const greaterThan = nodeProxy( OperatorNode, '>' );
-export const lessThanEqual = nodeProxy( OperatorNode, '<=' );
-export const greaterThanEqual = nodeProxy( OperatorNode, '>=' );
-export const and = nodeProxy( OperatorNode, '&&' );
-export const or = nodeProxy( OperatorNode, '||' );
-export const not = nodeProxy( OperatorNode, '!' );
-export const xor = nodeProxy( OperatorNode, '^^' );
-export const bitAnd = nodeProxy( OperatorNode, '&' );
-export const bitNot = nodeProxy( OperatorNode, '~' );
-export const bitOr = nodeProxy( OperatorNode, '|' );
-export const bitXor = nodeProxy( OperatorNode, '^' );
-export const shiftLeft = nodeProxy( OperatorNode, '<<' );
-export const shiftRight = nodeProxy( OperatorNode, '>>' );
+/**
+ * Returns the addition of two or more value.
+ *
+ * @tsl
+ * @function
+ * @param {Node} aNode - The first input.
+ * @param {Node} bNode - The second input.
+ * @param {...Node} params - Additional input parameters.
+ * @returns {OperatorNode}
+ */
+export const add = /*@__PURE__*/ nodeProxy( OperatorNode, '+' );
 
-addNodeElement( 'add', add );
-addNodeElement( 'sub', sub );
-addNodeElement( 'mul', mul );
-addNodeElement( 'div', div );
-addNodeElement( 'remainder', remainder );
-addNodeElement( 'equal', equal );
-addNodeElement( 'notEqual', notEqual );
-addNodeElement( 'lessThan', lessThan );
-addNodeElement( 'greaterThan', greaterThan );
-addNodeElement( 'lessThanEqual', lessThanEqual );
-addNodeElement( 'greaterThanEqual', greaterThanEqual );
-addNodeElement( 'and', and );
-addNodeElement( 'or', or );
-addNodeElement( 'not', not );
-addNodeElement( 'xor', xor );
-addNodeElement( 'bitAnd', bitAnd );
-addNodeElement( 'bitNot', bitNot );
-addNodeElement( 'bitOr', bitOr );
-addNodeElement( 'bitXor', bitXor );
-addNodeElement( 'shiftLeft', shiftLeft );
-addNodeElement( 'shiftRight', shiftRight );
+/**
+ * Returns the subtraction of two or more value.
+ *
+ * @tsl
+ * @function
+ * @param {Node} aNode - The first input.
+ * @param {Node} bNode - The second input.
+ * @param {...Node} params - Additional input parameters.
+ * @returns {OperatorNode}
+ */
+export const sub = /*@__PURE__*/ nodeProxy( OperatorNode, '-' );
 
-addNodeClass( 'OperatorNode', OperatorNode );
+/**
+ * Returns the multiplication of two or more value.
+ *
+ * @tsl
+ * @function
+ * @param {Node} aNode - The first input.
+ * @param {Node} bNode - The second input.
+ * @param {...Node} params - Additional input parameters.
+ * @returns {OperatorNode}
+ */
+export const mul = /*@__PURE__*/ nodeProxy( OperatorNode, '*' );
+
+/**
+ * Returns the division of two or more value.
+ *
+ * @tsl
+ * @function
+ * @param {Node} aNode - The first input.
+ * @param {Node} bNode - The second input.
+ * @param {...Node} params - Additional input parameters.
+ * @returns {OperatorNode}
+ */
+export const div = /*@__PURE__*/ nodeProxy( OperatorNode, '/' );
+
+/**
+ * Computes the remainder of dividing the first node by the second, for integer values.
+ *
+ * @tsl
+ * @function
+ * @param {Node} aNode - The first input.
+ * @param {Node} bNode - The second input.
+ * @returns {OperatorNode}
+ */
+export const modInt = /*@__PURE__*/ nodeProxy( OperatorNode, '%' );
+
+/**
+ * Checks if two nodes are equal.
+ *
+ * @tsl
+ * @function
+ * @param {Node} aNode - The first input.
+ * @param {Node} bNode - The second input.
+ * @returns {OperatorNode}
+ */
+export const equal = /*@__PURE__*/ nodeProxy( OperatorNode, '==' );
+
+/**
+ * Checks if two nodes are not equal.
+ *
+ * @tsl
+ * @function
+ * @param {Node} aNode - The first input.
+ * @param {Node} bNode - The second input.
+ * @returns {OperatorNode}
+ */
+export const notEqual = /*@__PURE__*/ nodeProxy( OperatorNode, '!=' );
+
+/**
+ * Checks if the first node is less than the second.
+ *
+ * @tsl
+ * @function
+ * @param {Node} aNode - The first input.
+ * @param {Node} bNode - The second input.
+ * @returns {OperatorNode}
+ */
+export const lessThan = /*@__PURE__*/ nodeProxy( OperatorNode, '<' );
+
+/**
+ * Checks if the first node is greater than the second.
+ *
+ * @tsl
+ * @function
+ * @param {Node} aNode - The first input.
+ * @param {Node} bNode - The second input.
+ * @returns {OperatorNode}
+ */
+export const greaterThan = /*@__PURE__*/ nodeProxy( OperatorNode, '>' );
+
+/**
+ * Checks if the first node is less than or equal to the second.
+ *
+ * @tsl
+ * @function
+ * @param {Node} aNode - The first input.
+ * @param {Node} bNode - The second input.
+ * @returns {OperatorNode}
+ */
+export const lessThanEqual = /*@__PURE__*/ nodeProxy( OperatorNode, '<=' );
+
+/**
+ * Checks if the first node is greater than or equal to the second.
+ *
+ * @tsl
+ * @function
+ * @param {Node} aNode - The first input.
+ * @param {Node} bNode - The second input.
+ * @returns {OperatorNode}
+ */
+export const greaterThanEqual = /*@__PURE__*/ nodeProxy( OperatorNode, '>=' );
+
+/**
+ * Performs logical AND on two nodes.
+ *
+ * @tsl
+ * @function
+ * @param {Node} aNode - The first input.
+ * @param {Node} bNode - The second input.
+ * @returns {OperatorNode}
+ */
+export const and = /*@__PURE__*/ nodeProxy( OperatorNode, '&&' );
+
+/**
+ * Performs logical OR on two nodes.
+ *
+ * @tsl
+ * @function
+ * @param {Node} aNode - The first input.
+ * @param {Node} bNode - The second input.
+ * @returns {OperatorNode}
+ */
+export const or = /*@__PURE__*/ nodeProxy( OperatorNode, '||' );
+
+/**
+ * Performs logical NOT on a node.
+ *
+ * @tsl
+ * @function
+ * @param {Node} aNode - The first input.
+ * @param {Node} bNode - The second input.
+ * @returns {OperatorNode}
+ */
+export const not = /*@__PURE__*/ nodeProxy( OperatorNode, '!' );
+
+/**
+ * Performs logical XOR on two nodes.
+ *
+ * @tsl
+ * @function
+ * @param {Node} aNode - The first input.
+ * @param {Node} bNode - The second input.
+ * @returns {OperatorNode}
+ */
+export const xor = /*@__PURE__*/ nodeProxy( OperatorNode, '^^' );
+
+/**
+ * Performs bitwise AND on two nodes.
+ *
+ * @tsl
+ * @function
+ * @param {Node} aNode - The first input.
+ * @param {Node} bNode - The second input.
+ * @returns {OperatorNode}
+ */
+export const bitAnd = /*@__PURE__*/ nodeProxy( OperatorNode, '&' );
+
+/**
+ * Performs bitwise NOT on a node.
+ *
+ * @tsl
+ * @function
+ * @param {Node} aNode - The first input.
+ * @param {Node} bNode - The second input.
+ * @returns {OperatorNode}
+ */
+export const bitNot = /*@__PURE__*/ nodeProxy( OperatorNode, '~' );
+
+/**
+ * Performs bitwise OR on two nodes.
+ *
+ * @tsl
+ * @function
+ * @param {Node} aNode - The first input.
+ * @param {Node} bNode - The second input.
+ * @returns {OperatorNode}
+ */
+export const bitOr = /*@__PURE__*/ nodeProxy( OperatorNode, '|' );
+
+/**
+ * Performs bitwise XOR on two nodes.
+ *
+ * @tsl
+ * @function
+ * @param {Node} aNode - The first input.
+ * @param {Node} bNode - The second input.
+ * @returns {OperatorNode}
+ */
+export const bitXor = /*@__PURE__*/ nodeProxy( OperatorNode, '^' );
+
+/**
+ * Shifts a node to the left.
+ *
+ * @tsl
+ * @function
+ * @param {Node} aNode - The node to shift.
+ * @param {Node} bNode - The value to shift.
+ * @returns {OperatorNode}
+ */
+export const shiftLeft = /*@__PURE__*/ nodeProxy( OperatorNode, '<<' );
+
+/**
+ * Shifts a node to the right.
+ *
+ * @tsl
+ * @function
+ * @param {Node} aNode - The node to shift.
+ * @param {Node} bNode - The value to shift.
+ * @returns {OperatorNode}
+ */
+export const shiftRight = /*@__PURE__*/ nodeProxy( OperatorNode, '>>' );
+
+addMethodChaining( 'add', add );
+addMethodChaining( 'sub', sub );
+addMethodChaining( 'mul', mul );
+addMethodChaining( 'div', div );
+addMethodChaining( 'modInt', modInt );
+addMethodChaining( 'equal', equal );
+addMethodChaining( 'notEqual', notEqual );
+addMethodChaining( 'lessThan', lessThan );
+addMethodChaining( 'greaterThan', greaterThan );
+addMethodChaining( 'lessThanEqual', lessThanEqual );
+addMethodChaining( 'greaterThanEqual', greaterThanEqual );
+addMethodChaining( 'and', and );
+addMethodChaining( 'or', or );
+addMethodChaining( 'not', not );
+addMethodChaining( 'xor', xor );
+addMethodChaining( 'bitAnd', bitAnd );
+addMethodChaining( 'bitNot', bitNot );
+addMethodChaining( 'bitOr', bitOr );
+addMethodChaining( 'bitXor', bitXor );
+addMethodChaining( 'shiftLeft', shiftLeft );
+addMethodChaining( 'shiftRight', shiftRight );
+
+/**
+ * @tsl
+ * @function
+ * @deprecated since r168. Use {@link modInt} instead.
+ *
+ * @param  {...any} params
+ * @returns {Function}
+ */
+export const remainder = ( ...params ) => { // @deprecated, r168
+
+	console.warn( 'TSL.OperatorNode: .remainder() has been renamed to .modInt().' );
+	return modInt( ...params );
+
+};
+
+addMethodChaining( 'remainder', remainder );

@@ -8,7 +8,7 @@
 	<body>
 
 		<div id="info">
-			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> WebGPU - Compute - 1M Particles
+			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> WebGPU - Compute - 500k Particles
 			<div id="timestamps" style="
 				position: absolute;
 				top: 60px;
@@ -28,7 +28,8 @@
 			{
 				"imports": {
 					"three": "../build/three.webgpu.js",
-					"three/tsl": "../build/three.webgpu.js",
+					"three/webgpu": "../build/three.webgpu.js",
+					"three/tsl": "../build/three.tsl.js",
 					"three/addons/": "./jsm/"
 				}
 			}
@@ -37,14 +38,14 @@
 		<script type="module">
 
 			import * as THREE from 'three';
-			import { Fn, uniform, texture, instanceIndex, float, vec3, storage, If } from 'three/tsl';
+			import { Fn, uniform, texture, instancedArray, instanceIndex, float, hash, vec3, If } from 'three/tsl';
 
 			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 			import Stats from 'three/addons/libs/stats.module.js';
 
 			import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
-			const particleCount = 1000000;
+			const particleCount = 500000;
 
 			const gravity = uniform( - .0098 );
 			const bounce = uniform( .8 );
@@ -77,11 +78,9 @@
 
 				//
 
-				const createBuffer = () => storage( new THREE.StorageInstancedBufferAttribute( particleCount, 3 ), 'vec3', particleCount );
-
-				const positionBuffer = createBuffer();
-				const velocityBuffer = createBuffer();
-				const colorBuffer = createBuffer();
+				const positionBuffer = instancedArray( particleCount, 'vec3' );
+				const velocityBuffer = instancedArray( particleCount, 'vec3' );
+				const colorBuffer = instancedArray( particleCount, 'vec3' );
 
 				// compute
 
@@ -90,9 +89,9 @@
 					const position = positionBuffer.element( instanceIndex );
 					const color = colorBuffer.element( instanceIndex );
 
-					const randX = instanceIndex.hash();
-					const randY = instanceIndex.add( 2 ).hash();
-					const randZ = instanceIndex.add( 3 ).hash();
+					const randX = hash( instanceIndex );
+					const randY = hash( instanceIndex.add( 2 ) );
+					const randZ = hash( instanceIndex.add( 3 ) );
 
 					position.x = randX.mul( 100 ).add( - 50 );
 					position.y = 0; // randY.mul( 10 );
@@ -178,7 +177,7 @@
 
 				//
 
-				renderer.compute( computeInit );
+				renderer.computeAsync( computeInit );
 
 				// click event
 
@@ -192,7 +191,7 @@
 					const distArea = float( 6 ).sub( dist ).max( 0 );
 
 					const power = distArea.mul( .01 );
-					const relativePower = power.mul( instanceIndex.hash().mul( .5 ).add( .5 ) );
+					const relativePower = power.mul( hash( instanceIndex ).mul( .5 ).add( .5 ) );
 
 					velocity.assign( velocity.add( direction.mul( relativePower ) ) );
 
@@ -219,7 +218,7 @@
 
 						// compute
 
-						renderer.compute( computeHit );
+						renderer.computeAsync( computeHit );
 
 					}
 
@@ -228,6 +227,7 @@
 				// events
 
 				renderer.domElement.addEventListener( 'pointermove', onMove );
+
 				//
 
 				controls = new OrbitControls( camera, renderer.domElement );
@@ -267,8 +267,10 @@
 				stats.update();
 
 				await renderer.computeAsync( computeParticles );
+				renderer.resolveTimestampsAsync( THREE.TimestampQuery.COMPUTE );
 
 				await renderer.renderAsync( scene, camera );
+				renderer.resolveTimestampsAsync( THREE.TimestampQuery.RENDER );
 
 				// throttle the logging
 

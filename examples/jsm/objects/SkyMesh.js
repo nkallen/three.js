@@ -2,10 +2,11 @@ import {
 	BackSide,
 	BoxGeometry,
 	Mesh,
-	NodeMaterial,
-	Vector3
-} from 'three';
-import { float, tslFn, vec3, acos, add, mul, clamp, cos, dot, exp, max, mix, modelViewProjection, normalize, positionWorld, pow, smoothstep, sub, varying, varyingProperty, vec4, uniform, cameraPosition } from 'three/tsl';
+	Vector3,
+	NodeMaterial
+} from 'three/webgpu';
+
+import { Fn, float, vec3, acos, add, mul, clamp, cos, dot, exp, max, mix, modelViewProjection, normalize, positionWorld, pow, smoothstep, sub, varying, varyingProperty, vec4, uniform, cameraPosition } from 'three/tsl';
 
 /**
  * Based on "A Practical Analytic Model for Daylight"
@@ -34,11 +35,11 @@ class SkyMesh extends Mesh {
 		this.mieCoefficient = uniform( 0.005 );
 		this.mieDirectionalG = uniform( 0.8 );
 		this.sunPosition = uniform( new Vector3() );
-		this.up = uniform( new Vector3( 0, 1, 0 ) );
+		this.upUniform = uniform( new Vector3( 0, 1, 0 ) );
 
 		this.isSky = true;
 
-		const vertexNode = /*@__PURE__*/ tslFn( () => {
+		const vertexNode = /*@__PURE__*/ Fn( () => {
 
 			// constants for atmospheric scattering
 			const e = float( 2.71828182845904523536028747135266249775724709369995957 );
@@ -46,7 +47,7 @@ class SkyMesh extends Mesh {
 
 			// wavelength of used primaries, according to preetham
 			// const lambda = vec3( 680E-9, 550E-9, 450E-9 );
-			// this pre-calcuation replaces older TotalRayleigh(vec3 lambda) function:
+			// this pre-calculation replaces older TotalRayleigh(vec3 lambda) function:
 			// (8.0 * pow(pi, 3.0) * pow(pow(n, 2.0) - 1.0, 2.0) * (6.0 + 3.0 * pn)) / (3.0 * N * pow(lambda, vec3(4.0)) * (6.0 - 7.0 * pn))
 			const totalRayleigh = vec3( 5.804542996261093E-6, 1.3562911419845635E-5, 3.0265902468824876E-5 );
 
@@ -70,7 +71,7 @@ class SkyMesh extends Mesh {
 
 			// varying sun intensity
 
-			const angle = dot( vSunDirection, this.up );
+			const angle = dot( vSunDirection, this.upUniform );
 			const zenithAngleCos = clamp( angle, - 1, 1 );
 			const sunIntensity = EE.mul( max( 0.0, float( 1.0 ).sub( pow( e, cutoffAngle.sub( acos( zenithAngleCos ) ).div( steepness ).negate() ) ) ) );
 			varyingProperty( 'float', 'vSunE' ).assign( sunIntensity );
@@ -84,7 +85,7 @@ class SkyMesh extends Mesh {
 
 			const rayleighCoefficient = this.rayleigh.sub( float( 1.0 ).mul( float( 1.0 ).sub( vSunfade ) ) );
 
-			// extinction (absorbtion + out scattering)
+			// extinction (absorption + out scattering)
 			// rayleigh coefficients
 			varyingProperty( 'vec3', 'vBetaR' ).assign( totalRayleigh.mul( rayleighCoefficient ) );
 
@@ -97,14 +98,14 @@ class SkyMesh extends Mesh {
 
 			// position
 
-			const position = modelViewProjection();
+			const position = modelViewProjection;
 			position.z.assign( position.w ); // set z to camera.far
 
 			return position;
 
 		} )();
 
-		const fragmentNode = /*@__PURE__*/ tslFn( () => {
+		const fragmentNode = /*@__PURE__*/ Fn( () => {
 
 			const vSunDirection = varying( vec3(), 'vSunDirection' );
 			const vSunE = varying( float(), 'vSunE' );
@@ -132,7 +133,7 @@ class SkyMesh extends Mesh {
 
 			// optical length
 			// cutoff angle at 90 to avoid singularity in next formula.
-			const zenithAngle = acos( max( 0.0, dot( this.up, direction ) ) );
+			const zenithAngle = acos( max( 0.0, dot( this.upUniform, direction ) ) );
 			const inverse = float( 1.0 ).div( cos( zenithAngle ).add( float( 0.15 ).mul( pow( float( 93.885 ).sub( zenithAngle.mul( 180.0 ).div( pi ) ), - 1.253 ) ) ) );
 			const sR = rayleighZenithLength.mul( inverse );
 			const sM = mieZenithLength.mul( inverse );
@@ -157,7 +158,7 @@ class SkyMesh extends Mesh {
 			const betaMTheta = vBetaM.mul( mPhase );
 
 			const Lin = pow( vSunE.mul( add( betaRTheta, betaMTheta ).div( add( vBetaR, vBetaM ) ) ).mul( sub( 1.0, Fex ) ), vec3( 1.5 ) );
-			Lin.mulAssign( mix( vec3( 1.0 ), pow( vSunE.mul( add( betaRTheta, betaMTheta ).div( add( vBetaR, vBetaM ) ) ).mul( Fex ), vec3( 1.0 / 2.0 ) ), clamp( pow( sub( 1.0, dot( this.up, vSunDirection ) ), 5.0 ), 0.0, 1.0 ) ) );
+			Lin.mulAssign( mix( vec3( 1.0 ), pow( vSunE.mul( add( betaRTheta, betaMTheta ).div( add( vBetaR, vBetaM ) ) ).mul( Fex ), vec3( 1.0 / 2.0 ) ), clamp( pow( sub( 1.0, dot( this.upUniform, vSunDirection ) ), 5.0 ), 0.0, 1.0 ) ) );
 
 			// nightsky
 
@@ -175,7 +176,6 @@ class SkyMesh extends Mesh {
 
 		} )();
 
-		material.normals = false;
 		material.side = BackSide;
 		material.depthWrite = false;
 

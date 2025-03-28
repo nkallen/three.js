@@ -1,11 +1,25 @@
 import TempNode from '../core/TempNode.js';
-import { transformedNormalView } from '../accessors/NormalNode.js';
-import { positionViewDirection } from '../accessors/PositionNode.js';
-import { nodeImmutable, vec2, vec3 } from '../shadernode/ShaderNode.js';
-import { addNodeClass } from '../core/Node.js';
+import { transformedNormalView } from '../accessors/Normal.js';
+import { positionViewDirection } from '../accessors/Position.js';
+import { nodeImmutable, vec2, vec3 } from '../tsl/TSLBase.js';
 
+/**
+ * Can be used to compute texture coordinates for projecting a
+ * matcap onto a mesh. Used by {@link MeshMatcapNodeMaterial}.
+ *
+ * @augments TempNode
+ */
 class MatcapUVNode extends TempNode {
 
+	static get type() {
+
+		return 'MatcapUVNode';
+
+	}
+
+	/**
+	 * Constructs a new matcap uv node.
+	 */
 	constructor() {
 
 		super( 'vec2' );
@@ -25,6 +39,11 @@ class MatcapUVNode extends TempNode {
 
 export default MatcapUVNode;
 
-export const matcapUV = nodeImmutable( MatcapUVNode );
-
-addNodeClass( 'MatcapUVNode', MatcapUVNode );
+/**
+ * TSL function for creating a matcap uv node.
+ *
+ * @tsl
+ * @function
+ * @returns {MatcapUVNode}
+ */
+export const matcapUV = /*@__PURE__*/ nodeImmutable( MatcapUVNode );

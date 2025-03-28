@@ -16,7 +16,8 @@
 			{
 				"imports": {
 					"three": "../build/three.webgpu.js",
-					"three/tsl": "../build/three.webgpu.js",
+					"three/webgpu": "../build/three.webgpu.js",
+					"three/tsl": "../build/three.tsl.js",
 					"three/addons/": "./jsm/"
 				}
 			}
@@ -32,7 +33,7 @@
 
 			let camera, scene, renderer;
 
-			init().then( render );
+			init();
 
 			async function init() {
 
@@ -48,6 +49,7 @@
 				renderer.setAnimationLoop( render );
 				renderer.toneMapping = THREE.AgXToneMapping;
 				renderer.toneMappingExposure = 1.5;
+				renderer.shadowMap.enabled = true;
 				container.appendChild( renderer.domElement );
 
 				scene = new THREE.Scene();
@@ -71,6 +73,10 @@
 				dirLight.shadow.mapSize.height = 2048;
 				dirLight.shadow.radius = 4;
 				dirLight.shadow.bias = - 0.0005;
+
+				dirLight.shadow.autoUpdate = false;
+				dirLight.shadow.needsUpdate = true;
+
 				scene.add( dirLight );
 
 				//
@@ -107,8 +113,8 @@
 				dragon.castShadow = dragon2.castShadow = true;
 				dragon.receiveShadow = dragon2.receiveShadow = true;
 
-				dragon.material.shadowNode = customShadow( dragon.material.attenuationColor );
-				dragon2.material.shadowNode = customShadow( dragon2.material.attenuationColor );
+				dragon.material.castShadowNode = customShadow( dragon.material.attenuationColor );
+				dragon2.material.castShadowNode = customShadow( dragon2.material.attenuationColor );
 
 				//
 
