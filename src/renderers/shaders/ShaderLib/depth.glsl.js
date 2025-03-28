@@ -73,6 +73,7 @@ void main() {
 
 	#endif
 
+	#include <triplanar_fragment>
 	#include <map_fragment>
 	#include <alphamap_fragment>
 	#include <alphatest_fragment>

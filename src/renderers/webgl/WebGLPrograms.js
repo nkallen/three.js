@@ -1,4 +1,4 @@
-import { BackSide, DoubleSide, CubeUVReflectionMapping, ObjectSpaceNormalMap, TangentSpaceNormalMap, NoToneMapping, NormalBlending, LinearSRGBColorSpace, SRGBTransfer } from '../../constants.js';
+import { BackSide, DoubleSide, CubeUVReflectionMapping, ObjectSpaceNormalMap, TangentSpaceNormalMap, NoToneMapping, NormalBlending, LinearSRGBColorSpace, SRGBTransfer, UVMapping } from '../../constants.js';
 import { Layers } from '../../core/Layers.js';
 import { WebGLProgram } from './WebGLProgram.js';
 import { WebGLShaderCache } from './WebGLShaderCache.js';
@@ -259,21 +259,27 @@ function WebGLPrograms( renderer, cubemaps, cubeuvmaps, extensions, capabilities
 
 			//
 
-			mapUv: HAS_MAP && getChannel( material.map.channel ),
-			aoMapUv: HAS_AOMAP && getChannel( material.aoMap.channel ),
+			mapUv: HAS_MAP && material.map.mapping === UVMapping && getChannel( material.map.channel ),
+			mapMode: HAS_MAP && material.map.mapping,
+			aoMapUv: HAS_AOMAP && material.aoMap.mapping === UVMapping && getChannel( material.aoMap.channel ),
+			aoMapMode: HAS_AOMAP && material.aoMap.mapping,
 			lightMapUv: HAS_LIGHTMAP && getChannel( material.lightMap.channel ),
 			bumpMapUv: HAS_BUMPMAP && getChannel( material.bumpMap.channel ),
-			normalMapUv: HAS_NORMALMAP && getChannel( material.normalMap.channel ),
+			normalMapUv: HAS_NORMALMAP && material.normalMap.mapping === UVMapping && getChannel( material.normalMap.channel ),
+			normalMapMode: HAS_NORMALMAP && material.normalMap.mapping,
 			displacementMapUv: HAS_DISPLACEMENTMAP && getChannel( material.displacementMap.channel ),
 			emissiveMapUv: HAS_EMISSIVEMAP && getChannel( material.emissiveMap.channel ),
 
-			metalnessMapUv: HAS_METALNESSMAP && getChannel( material.metalnessMap.channel ),
-			roughnessMapUv: HAS_ROUGHNESSMAP && getChannel( material.roughnessMap.channel ),
+			metalnessMapUv: HAS_METALNESSMAP && material.metalnessMap.mapping === UVMapping && getChannel( material.metalnessMap.channel ),
+			metalnessMapMode: HAS_METALNESSMAP && material.metalnessMap.mapping,
+			roughnessMapUv: HAS_ROUGHNESSMAP && material.roughnessMap.mapping === UVMapping && getChannel( material.roughnessMap.channel ),
+			roughnessMapMode: HAS_ROUGHNESSMAP && material.roughnessMap.mapping,
 
 			anisotropyMapUv: HAS_ANISOTROPYMAP && getChannel( material.anisotropyMap.channel ),
 
 			clearcoatMapUv: HAS_CLEARCOATMAP && getChannel( material.clearcoatMap.channel ),
 			clearcoatNormalMapUv: HAS_CLEARCOAT_NORMALMAP && getChannel( material.clearcoatNormalMap.channel ),
+			clearcoatNormalMapMode: HAS_CLEARCOAT_NORMALMAP && material.clearcoatNormalMap.mapping,
 			clearcoatRoughnessMapUv: HAS_CLEARCOAT_ROUGHNESSMAP && getChannel( material.clearcoatRoughnessMap.channel ),
 
 			iridescenceMapUv: HAS_IRIDESCENCEMAP && getChannel( material.iridescenceMap.channel ),
@@ -289,7 +295,8 @@ function WebGLPrograms( renderer, cubemaps, cubeuvmaps, extensions, capabilities
 			transmissionMapUv: HAS_TRANSMISSIONMAP && getChannel( material.transmissionMap.channel ),
 			thicknessMapUv: HAS_THICKNESSMAP && getChannel( material.thicknessMap.channel ),
 
-			alphaMapUv: HAS_ALPHAMAP && getChannel( material.alphaMap.channel ),
+			alphaMapUv: HAS_ALPHAMAP && material.alphaMap.mapping === UVMapping && getChannel( material.alphaMap.channel ),
+			alphaMapMode: HAS_ALPHAMAP && material.alphaMap.mapping,
 
 			//
 
@@ -421,19 +428,26 @@ function WebGLPrograms( renderer, cubemaps, cubeuvmaps, extensions, capabilities
 		array.push( parameters.outputColorSpace );
 		array.push( parameters.envMapMode );
 		array.push( parameters.envMapCubeUVHeight );
+		array.push( parameters.mapMode );
 		array.push( parameters.mapUv );
+		array.push( parameters.alphaMapMode );
 		array.push( parameters.alphaMapUv );
 		array.push( parameters.lightMapUv );
 		array.push( parameters.aoMapUv );
+		array.push( parameters.aoMapMode );
 		array.push( parameters.bumpMapUv );
 		array.push( parameters.normalMapUv );
+		array.push( parameters.normalMapMode );
 		array.push( parameters.displacementMapUv );
 		array.push( parameters.emissiveMapUv );
 		array.push( parameters.metalnessMapUv );
+		array.push( parameters.metalnessMapMode );
 		array.push( parameters.roughnessMapUv );
+		array.push( parameters.roughnessMapMode );
 		array.push( parameters.anisotropyMapUv );
 		array.push( parameters.clearcoatMapUv );
 		array.push( parameters.clearcoatNormalMapUv );
+		array.push( parameters.clearcoatNormalMapMode);
 		array.push( parameters.clearcoatRoughnessMapUv );
 		array.push( parameters.iridescenceMapUv );
 		array.push( parameters.iridescenceThicknessMapUv );

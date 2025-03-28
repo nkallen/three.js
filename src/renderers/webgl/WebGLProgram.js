@@ -1,7 +1,7 @@
 import { WebGLUniforms } from './WebGLUniforms.js';
 import { WebGLShader } from './WebGLShader.js';
 import { ShaderChunk } from '../shaders/ShaderChunk.js';
-import { NoToneMapping, AddOperation, MixOperation, MultiplyOperation, CubeRefractionMapping, CubeUVReflectionMapping, CubeReflectionMapping, PCFSoftShadowMap, PCFShadowMap, VSMShadowMap, AgXToneMapping, ACESFilmicToneMapping, NeutralToneMapping, CineonToneMapping, CustomToneMapping, ReinhardToneMapping, LinearToneMapping, GLSL3, LinearTransfer, SRGBTransfer } from '../../constants.js';
+import { NoToneMapping, AddOperation, MixOperation, MultiplyOperation, CubeRefractionMapping, CubeUVReflectionMapping, CubeReflectionMapping, PCFSoftShadowMap, PCFShadowMap, VSMShadowMap, AgXToneMapping, ACESFilmicToneMapping, NeutralToneMapping, CineonToneMapping, CustomToneMapping, ReinhardToneMapping, LinearToneMapping, GLSL3, LinearTransfer, SRGBTransfer, TriPlanarMapping, CylindricalMapping, UVMapping } from '../../constants.js';
 import { ColorManagement } from '../../math/ColorManagement.js';
 import { Vector3 } from '../../math/Vector3.js';
 import { Matrix3 } from '../../math/Matrix3.js';
@@ -552,14 +552,17 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.useFog && parameters.fogExp2 ? '#define FOG_EXP2' : '',
 
 			parameters.map ? '#define USE_MAP' : '',
+			parameters.mapMode === TriPlanarMapping ? '#define USE_MAP_TRIPLANAR' : parameters.mapMode === CylindricalMapping ? '#define USE_MAP_CYLINDRICAL' : parameters.mapMode === UVMapping ? '#define USE_MAP_UV' : '',
 			parameters.envMap ? '#define USE_ENVMAP' : '',
 			parameters.envMap ? '#define ' + envMapModeDefine : '',
 			parameters.lightMap ? '#define USE_LIGHTMAP' : '',
 			parameters.aoMap ? '#define USE_AOMAP' : '',
+			parameters.aoMapMode === TriPlanarMapping ? '#define USE_AOMAP_TRIPLANAR' : parameters.aoMapMode === CylindricalMapping ? '#define USE_AOMAP_CYLINDRICAL' : parameters.aoMapMode == UVMapping ? '#define USE_AOMAP_UV' : '',
 			parameters.bumpMap ? '#define USE_BUMPMAP' : '',
 			parameters.normalMap ? '#define USE_NORMALMAP' : '',
-			parameters.normalMapObjectSpace ? '#define USE_NORMALMAP_OBJECTSPACE' : '',
-			parameters.normalMapTangentSpace ? '#define USE_NORMALMAP_TANGENTSPACE' : '',
+			parameters.normalMapMode === TriPlanarMapping ? '#define USE_NORMALMAP_TRIPLANAR' : parameters.normalMapMode === CylindricalMapping ? '#define USE_NORMALMAP_CYLINDRICAL' : parameters.normalMapMode === UVMapping ? '#define USE_NORMALMAP_UV' : '',
+			parameters.normalMapObjectSpace && [UVMapping, CylindricalMapping].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_OBJECTSPACE' : '',
+			parameters.normalMapTangentSpace && [UVMapping, CylindricalMapping].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_TANGENTSPACE' : '',
 			parameters.displacementMap ? '#define USE_DISPLACEMENTMAP' : '',
 			parameters.emissiveMap ? '#define USE_EMISSIVEMAP' : '',
 
@@ -569,6 +572,9 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.clearcoatMap ? '#define USE_CLEARCOATMAP' : '',
 			parameters.clearcoatRoughnessMap ? '#define USE_CLEARCOAT_ROUGHNESSMAP' : '',
 			parameters.clearcoatNormalMap ? '#define USE_CLEARCOAT_NORMALMAP' : '',
+			parameters.clearcoatNormalMapMode === TriPlanarMapping ? '#define USE_CLEARCOAT_NORMALMAP_TRIPLANAR' 
+      : parameters.clearcoatNormalMapMode === CylindricalMapping ? '#define USE_CLEARCOAT_NORMALMAP_CYLINDRICAL'
+      : parameters.clearcoatNormalMapMode === UVMapping ? '#define USE_CLEARCOAT_NORMALMAP_UV' : '',
 
 			parameters.iridescenceMap ? '#define USE_IRIDESCENCEMAP' : '',
 			parameters.iridescenceThicknessMap ? '#define USE_IRIDESCENCE_THICKNESSMAP' : '',
@@ -578,8 +584,11 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.specularIntensityMap ? '#define USE_SPECULAR_INTENSITYMAP' : '',
 
 			parameters.roughnessMap ? '#define USE_ROUGHNESSMAP' : '',
+			parameters.roughnessMapMode === TriPlanarMapping ? '#define USE_ROUGHNESSMAP_TRIPLANAR' : parameters.roughnessMapMode === CylindricalMapping ? '#define USE_ROUGHNESSMAP_CYLINDRICAL' : parameters.roughnessMapMode === UVMapping ? '#define USE_ROUGHNESSMAP_UV' : '',
 			parameters.metalnessMap ? '#define USE_METALNESSMAP' : '',
+			parameters.metalnessMapMode === TriPlanarMapping ? '#define USE_METALNESSMAP_TRIPLANAR' : parameters.metalnessMapMode === CylindricalMapping ? '#define USE_METALNESSMAP_CYLINDRICAL' : parameters.metalnessMapMode === UVMapping ? '#define USE_METALNESSMAP_UV' : '',
 			parameters.alphaMap ? '#define USE_ALPHAMAP' : '',
+			parameters.alphaMapMode === TriPlanarMapping ? '#define USE_ALPHAMAP_TRIPLANAR' : parameters.alphaMapMode === CylindricalMapping ? '#define USE_ALPHAMAP_CYLINDRICAL' : parameters.alphaMapMode === UVMapping ? '#define USE_ALPHAMAP_UV' : '',
 			parameters.alphaHash ? '#define USE_ALPHAHASH' : '',
 
 			parameters.transmission ? '#define USE_TRANSMISSION' : '',
@@ -744,6 +753,7 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 
 			parameters.alphaToCoverage ? '#define ALPHA_TO_COVERAGE' : '',
 			parameters.map ? '#define USE_MAP' : '',
+			parameters.mapMode === TriPlanarMapping ? '#define USE_MAP_TRIPLANAR' : parameters.mapMode === CylindricalMapping ? '#define USE_MAP_CYLINDRICAL' : parameters.mapMode === UVMapping ? '#define USE_MAP_UV' : '',
 			parameters.matcap ? '#define USE_MATCAP' : '',
 			parameters.envMap ? '#define USE_ENVMAP' : '',
 			parameters.envMap ? '#define ' + envMapTypeDefine : '',
@@ -754,10 +764,12 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			envMapCubeUVSize ? '#define CUBEUV_MAX_MIP ' + envMapCubeUVSize.maxMip + '.0' : '',
 			parameters.lightMap ? '#define USE_LIGHTMAP' : '',
 			parameters.aoMap ? '#define USE_AOMAP' : '',
+			parameters.aoMapMode === TriPlanarMapping ? '#define USE_AOMAP_TRIPLANAR' : parameters.aoMapMode === CylindricalMapping ? '#define USE_AOMAP_CYLINDRICAL' : parameters.aoMapMode == UVMapping ? '#define USE_AOMAP_UV' : '',
 			parameters.bumpMap ? '#define USE_BUMPMAP' : '',
 			parameters.normalMap ? '#define USE_NORMALMAP' : '',
-			parameters.normalMapObjectSpace ? '#define USE_NORMALMAP_OBJECTSPACE' : '',
-			parameters.normalMapTangentSpace ? '#define USE_NORMALMAP_TANGENTSPACE' : '',
+			parameters.normalMapMode === TriPlanarMapping ? '#define USE_NORMALMAP_TRIPLANAR' : parameters.normalMapMode === CylindricalMapping ? '#define USE_NORMALMAP_CYLINDRICAL' : parameters.normalMapMode === UVMapping ? '#define USE_NORMALMAP_UV' : '',
+			parameters.normalMapObjectSpace && [UVMapping, CylindricalMapping].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_OBJECTSPACE' : '',
+			parameters.normalMapTangentSpace && [UVMapping, CylindricalMapping].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_TANGENTSPACE' : '',
 			parameters.emissiveMap ? '#define USE_EMISSIVEMAP' : '',
 
 			parameters.anisotropy ? '#define USE_ANISOTROPY' : '',
@@ -767,6 +779,9 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.clearcoatMap ? '#define USE_CLEARCOATMAP' : '',
 			parameters.clearcoatRoughnessMap ? '#define USE_CLEARCOAT_ROUGHNESSMAP' : '',
 			parameters.clearcoatNormalMap ? '#define USE_CLEARCOAT_NORMALMAP' : '',
+			parameters.clearcoatNormalMapMode === TriPlanarMapping ? '#define USE_CLEARCOAT_NORMALMAP_TRIPLANAR' 
+			: parameters.clearcoatNormalMapMode === CylindricalMapping ? '#define USE_CLEARCOAT_NORMALMAP_CYLINDRICAL'
+			: parameters.clearcoatNormalMapMode === UVMapping ? '#define USE_CLEARCOAT_NORMALMAP_UV' : '',
 
 			parameters.dispersion ? '#define USE_DISPERSION' : '',
 
@@ -779,9 +794,12 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.specularIntensityMap ? '#define USE_SPECULAR_INTENSITYMAP' : '',
 
 			parameters.roughnessMap ? '#define USE_ROUGHNESSMAP' : '',
+			parameters.roughnessMapMode === TriPlanarMapping ? '#define USE_ROUGHNESSMAP_TRIPLANAR' : parameters.roughnessMapMode === CylindricalMapping ? '#define USE_ROUGHNESSMAP_CYLINDRICAL' : parameters.roughnessMapMode === UVMapping ? '#define USE_ROUGHNESSMAP_UV' : '',
 			parameters.metalnessMap ? '#define USE_METALNESSMAP' : '',
+			parameters.metalnessMapMode === TriPlanarMapping ? '#define USE_METALNESSMAP_TRIPLANAR' : parameters.metalnessMapMode === CylindricalMapping ? '#define USE_METALNESSMAP_CYLINDRICAL' : parameters.metalnessMapMode === UVMapping ? '#define USE_METALNESSMAP_UV' : '',
 
 			parameters.alphaMap ? '#define USE_ALPHAMAP' : '',
+			parameters.alphaMapMode === TriPlanarMapping ? '#define USE_ALPHAMAP_TRIPLANAR' : parameters.alphaMapMode === CylindricalMapping ? '#define USE_ALPHAMAP_CYLINDRICAL' : parameters.alphaMapMode === UVMapping ? '#define USE_ALPHAMAP_UV' : '',
 			parameters.alphaTest ? '#define USE_ALPHATEST' : '',
 			parameters.alphaHash ? '#define USE_ALPHAHASH' : '',
 
@@ -822,7 +840,9 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.logarithmicDepthBuffer ? '#define USE_LOGDEPTHBUF' : '',
 			parameters.reverseDepthBuffer ? '#define USE_REVERSEDEPTHBUF' : '',
 
+			'uniform mat4 modelViewMatrix;',
 			'uniform mat4 viewMatrix;',
+			'uniform mat3 normalMatrix;',
 			'uniform vec3 cameraPosition;',
 			'uniform bool isOrthographic;',
 

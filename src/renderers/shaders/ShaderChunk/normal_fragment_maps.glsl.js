@@ -1,6 +1,10 @@
 export default /* glsl */`
 
-#ifdef USE_NORMALMAP_OBJECTSPACE
+#ifdef USE_NORMALMAP_TRIPLANAR
+
+	normal = normalize(normalMatrix * transpose(mat3(texture3DMatrix)) * texture2DTriplanarNormal( normalMap, normalMapTransform, normalScale, normalize(mat3(texture3DMatrix) * vModelNormal.xyz), triplanarCoords, triplanarWeights ));
+
+#elif defined( USE_NORMALMAP_OBJECTSPACE )
 
 	normal = texture2D( normalMap, vNormalMapUv ).xyz * 2.0 - 1.0; // overrides both flatShading and attribute normals
 

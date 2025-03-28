@@ -1,15 +1,29 @@
 export default /* glsl */`
 #if defined( USE_UV ) || defined( USE_ANISOTROPY )
 
-	vUv = vec3( uv, 1 ).xy;
+  #if defined( USE_UV1 ) || defined( USE_UV2 ) || defined( USE_UV3 )
+	  vUv = vec3( uv, 1 ).xy;
+  #endif
 
 #endif
-#ifdef USE_MAP
+#if defined( USE_TRIPLANAR ) || defined( USE_CYLINDRICAL )
+
+	vModelPosition = (texture3DMatrix * vec4(position.xyz, 1)).xyz;
+
+	#ifdef USE_BATCHING
+
+		vModelPosition = (batchingMatrix * vec4(vModelPosition, 1)).xyz;
+
+	#endif
+
+#endif
+
+#if defined( USE_MAP_UV )
 
 	vMapUv = ( mapTransform * vec3( MAP_UV, 1 ) ).xy;
 
 #endif
-#ifdef USE_ALPHAMAP
+#if defined( USE_ALPHAMAP_UV )
 
 	vAlphaMapUv = ( alphaMapTransform * vec3( ALPHAMAP_UV, 1 ) ).xy;
 
@@ -19,7 +33,7 @@ export default /* glsl */`
 	vLightMapUv = ( lightMapTransform * vec3( LIGHTMAP_UV, 1 ) ).xy;
 
 #endif
-#ifdef USE_AOMAP
+#if defined( USE_AOMAP_UV )
 
 	vAoMapUv = ( aoMapTransform * vec3( AOMAP_UV, 1 ) ).xy;
 
@@ -29,7 +43,7 @@ export default /* glsl */`
 	vBumpMapUv = ( bumpMapTransform * vec3( BUMPMAP_UV, 1 ) ).xy;
 
 #endif
-#ifdef USE_NORMALMAP
+#if defined( USE_NORMALMAP_UV )
 
 	vNormalMapUv = ( normalMapTransform * vec3( NORMALMAP_UV, 1 ) ).xy;
 
@@ -44,12 +58,12 @@ export default /* glsl */`
 	vEmissiveMapUv = ( emissiveMapTransform * vec3( EMISSIVEMAP_UV, 1 ) ).xy;
 
 #endif
-#ifdef USE_METALNESSMAP
+#if defined( USE_METALNESSMAP_UV )
 
 	vMetalnessMapUv = ( metalnessMapTransform * vec3( METALNESSMAP_UV, 1 ) ).xy;
 
 #endif
-#ifdef USE_ROUGHNESSMAP
+#if defined( USE_ROUGHNESSMAP_UV )
 
 	vRoughnessMapUv = ( roughnessMapTransform * vec3( ROUGHNESSMAP_UV, 1 ) ).xy;
 
