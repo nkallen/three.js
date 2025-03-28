@@ -12,7 +12,7 @@ import { MeshNormalMaterial } from '../MeshNormalMaterial.js';
 const _defaultValues = /*@__PURE__*/ new MeshNormalMaterial();
 
 /**
- * Node material version of `MeshNormalMaterial`.
+ * Node material version of {@link MeshNormalMaterial}.
  *
  * @augments NodeMaterial
  */
@@ -27,7 +27,7 @@ class MeshNormalNodeMaterial extends NodeMaterial {
 	/**
 	 * Constructs a new mesh normal node material.
 	 *
-	 * @param {?Object} parameters - The configuration parameter.
+	 * @param {Object} [parameters] - The configuration parameter.
 	 */
 	constructor( parameters ) {
 

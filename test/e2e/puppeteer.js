@@ -107,6 +107,9 @@ const exceptionList = [
 	'webgl_test_wide_gamut',
 	'webgl_volume_instancing',
 
+	// Intentional z-fighting in this demo makes it non-deterministic
+	'webgl_reverse_depth_buffer',
+
 	// TODO: implement determinism for setTimeout and setInterval
 	// could it fix some examples from above?
 	'physics_rapier_instancing',
@@ -160,6 +163,7 @@ const exceptionList = [
 	'webgpu_postprocessing_sobel',
 	'webgpu_postprocessing_3dlut',
 	'webgpu_postprocessing_afterimage',
+	'webgpu_xr_native_layers',
 
 	// WebGPU idleTime and parseTime too low
 	'webgpu_compute_particles',

@@ -79,7 +79,7 @@ class GLSLNodeBuilder extends NodeBuilder {
 		 * An array that holds objects defining the varying and attribute data in
 		 * context of Transform Feedback.
 		 *
-		 * @type {Object<string,Map<string,Object>>}
+		 * @type {Array<Object<string,AttributeNode|string>>}
 		 */
 		this.transforms = [];
 
@@ -96,14 +96,6 @@ class GLSLNodeBuilder extends NodeBuilder {
 		 * @type {Object<string,Array<string>>}
 		 */
 		this.builtins = { vertex: [], fragment: [], compute: [] };
-
-		/**
-		 * Whether comparison in shader code are generated with methods or not.
-		 *
-		 * @type {boolean}
-		 * @default true
-		 */
-		this.useComparisonMethod = true;
 
 	}
 
@@ -775,7 +767,7 @@ ${ flowData.code }
 
 					const flat = type.includes( 'int' ) || type.includes( 'uv' ) || type.includes( 'iv' ) ? 'flat ' : '';
 
-					snippet += `${flat} out ${type} ${varying.name};\n`;
+					snippet += `${flat}out ${type} ${varying.name};\n`;
 
 				} else {
 
@@ -1073,10 +1065,9 @@ ${ flowData.code }
 		for ( let i = 0; i < transforms.length; i ++ ) {
 
 			const transform = transforms[ i ];
-
 			const attributeName = this.getPropertyName( transform.attributeNode );
 
-			snippet += `${ transform.varyingName } = ${ attributeName };\n\t`;
+			if ( attributeName ) snippet += `${ transform.varyingName } = ${ attributeName };\n\t`;
 
 		}
 
