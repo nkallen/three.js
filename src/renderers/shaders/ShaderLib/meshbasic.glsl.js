@@ -12,11 +12,11 @@ export const vertex = /* glsl */`
 
 void main() {
 
+	#include <batching_vertex>
 	#include <uv_vertex>
 	#include <color_vertex>
 	#include <morphinstance_vertex>
 	#include <morphcolor_vertex>
-	#include <batching_vertex>
 
 	#if defined ( USE_ENVMAP ) || defined ( USE_SKINNING )
 
