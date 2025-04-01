@@ -13,9 +13,9 @@ varying vec3 vWorldPosition;
 
 void main() {
 
+	#include <batching_vertex>
 	#include <uv_vertex>
 
-	#include <batching_vertex>
 	#include <skinbase_vertex>
 
 	#include <morphinstance_vertex>
