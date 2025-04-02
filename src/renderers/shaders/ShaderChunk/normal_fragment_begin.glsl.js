@@ -68,15 +68,19 @@ float faceDirection = gl_FrontFacing ? 1.0 : - 1.0;
 
 		mat3 tbn2 = mat3( normalize( vTangent ), normalize( vBitangent ), normal );
 
-  #elif defined( USE_CLEARCOAT_NORMALMAP_CYLINDRICAL )
+    #elif defined( USE_CLEARCOAT_NORMALMAP_CYLINDRICAL )
 
-    vec3 tangent2 = normalize(cross(normal, mat3(modelViewMatrix) * transpose(mat3(texture3DMatrix)) * vec3(0, 1, 0)));
-    vec3 bitangent2 = cross(tangent2, normal);
-  	mat3 tbn2 = mat3(tangent2, bitangent2, normal);
+		vec3 tangent2 = normalize(cross(normal, mat3(modelViewMatrix) * transpose(mat3(texture3DMatrix)) * vec3(0, 1, 0)));
+		vec3 bitangent2 = cross(tangent2, normal);
+		mat3 tbn2 = mat3(tangent2, bitangent2, normal);
 
 	#elif defined( USE_CLEARCOAT_NORMALMAP_UV )
 
 		mat3 tbn2 = getTangentFrame( - vViewPosition, normal, vClearcoatNormalMapUv );
+
+	#else
+
+		mat3 tbn2 = getTangentFrame( - vViewPosition, normal, vUv );
 
 	#endif
 
