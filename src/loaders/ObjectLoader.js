@@ -981,17 +981,13 @@ class ObjectLoader extends Loader {
 					let sphere = null;
 					if ( info.boundingBox !== undefined ) {
 
-						box = new Box3();
-						box.min.fromArray( info.boundingBox.min );
-						box.max.fromArray( info.boundingBox.max );
+						box = new Box3().fromJSON( info.boundingBox );
 
 					}
 
 					if ( info.boundingSphere !== undefined ) {
 
-						sphere = new Sphere();
-						sphere.radius = info.boundingSphere.radius;
-						sphere.center.fromArray( info.boundingSphere.center );
+						sphere = new Sphere().fromJSON( info.boundingSphere );
 
 					}
 
@@ -1029,17 +1025,13 @@ class ObjectLoader extends Loader {
 
 				if ( data.boundingSphere !== undefined ) {
 
-					object.boundingSphere = new Sphere();
-					object.boundingSphere.center.fromArray( data.boundingSphere.center );
-					object.boundingSphere.radius = data.boundingSphere.radius;
+					object.boundingSphere = new Sphere().fromJSON( data.boundingSphere );
 
 				}
 
 				if ( data.boundingBox !== undefined ) {
 
-					object.boundingBox = new Box3();
-					object.boundingBox.min.fromArray( data.boundingBox.min );
-					object.boundingBox.max.fromArray( data.boundingBox.max );
+					object.boundingBox = new Box3().fromJSON( data.boundingBox );
 
 				}
 
