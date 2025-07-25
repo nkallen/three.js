@@ -3,6 +3,7 @@ import { renderGroup, sharedUniformGroup } from '../core/UniformGroupNode.js';
 import { Vector3 } from '../../math/Vector3.js';
 import { Fn } from '../tsl/TSLBase.js';
 import { uniformArray } from './UniformArrayNode.js';
+import { builtin } from './BuiltinNode.js';
 
 /**
  * TSL object that represents the current `index` value of the camera if used ArrayCamera.
@@ -10,7 +11,7 @@ import { uniformArray } from './UniformArrayNode.js';
  * @tsl
  * @type {UniformNode<uint>}
  */
-export const cameraIndex = /*@__PURE__*/ uniform( 0, 'uint' ).setGroup( sharedUniformGroup( 'cameraIndex' ) ).toVarying( 'v_cameraIndex' );
+export const cameraIndex = /*@__PURE__*/ uniform( 0, 'uint' ).label( 'u_cameraIndex' ).setGroup( sharedUniformGroup( 'cameraIndex' ) ).toVarying( 'v_cameraIndex' );
 
 /**
  * TSL object that represents the `near` value of the camera used for the current render.
@@ -50,7 +51,7 @@ export const cameraProjectionMatrix = /*@__PURE__*/ ( Fn( ( { camera } ) => {
 
 		const cameraProjectionMatrices = uniformArray( matrices ).setGroup( renderGroup ).label( 'cameraProjectionMatrices' );
 
-		cameraProjectionMatrix = cameraProjectionMatrices.element( cameraIndex ).toVar( 'cameraProjectionMatrix' );
+		cameraProjectionMatrix = cameraProjectionMatrices.element( camera.isMultiViewCamera ? builtin( 'gl_ViewID_OVR' ) : cameraIndex ).toVar( 'cameraProjectionMatrix' );
 
 	} else {
 
@@ -68,7 +69,33 @@ export const cameraProjectionMatrix = /*@__PURE__*/ ( Fn( ( { camera } ) => {
  * @tsl
  * @type {UniformNode<mat4>}
  */
-export const cameraProjectionMatrixInverse = /*@__PURE__*/ uniform( 'mat4' ).label( 'cameraProjectionMatrixInverse' ).setGroup( renderGroup ).onRenderUpdate( ( { camera } ) => camera.projectionMatrixInverse );
+export const cameraProjectionMatrixInverse = /*@__PURE__*/ ( Fn( ( { camera } ) => {
+
+	let cameraProjectionMatrixInverse;
+
+	if ( camera.isArrayCamera && camera.cameras.length > 0 ) {
+
+		const matrices = [];
+
+		for ( const subCamera of camera.cameras ) {
+
+			matrices.push( subCamera.projectionMatrixInverse );
+
+		}
+
+		const cameraProjectionMatricesInverse = uniformArray( matrices ).setGroup( renderGroup ).label( 'cameraProjectionMatricesInverse' );
+
+		cameraProjectionMatrixInverse = cameraProjectionMatricesInverse.element( camera.isMultiViewCamera ? builtin( 'gl_ViewID_OVR' ) : cameraIndex ).toVar( 'cameraProjectionMatrixInverse' );
+
+	} else {
+
+		cameraProjectionMatrixInverse = uniform( 'mat4' ).label( 'cameraProjectionMatrixInverse' ).setGroup( renderGroup ).onRenderUpdate( ( { camera } ) => camera.projectionMatrixInverse );
+
+	}
+
+	return cameraProjectionMatrixInverse;
+
+} ).once() )();
 
 /**
  * TSL object that represents the view matrix of the camera used for the current render.
@@ -92,7 +119,7 @@ export const cameraViewMatrix = /*@__PURE__*/ ( Fn( ( { camera } ) => {
 
 		const cameraViewMatrices = uniformArray( matrices ).setGroup( renderGroup ).label( 'cameraViewMatrices' );
 
-		cameraViewMatrix = cameraViewMatrices.element( cameraIndex ).toVar( 'cameraViewMatrix' );
+		cameraViewMatrix = cameraViewMatrices.element( camera.isMultiViewCamera ? builtin( 'gl_ViewID_OVR' ) : cameraIndex ).toVar( 'cameraViewMatrix' );
 
 	} else {
 

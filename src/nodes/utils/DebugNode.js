@@ -41,15 +41,18 @@ class DebugNode extends TempNode {
 		const callback = this.callback;
 		const snippet = this.node.build( builder );
 
+		const title = '--- TSL debug - ' + builder.shaderStage + ' shader ---';
+		const border = '-'.repeat( title.length );
+
 		let code = '';
-		code += '// #--- TSL Debug ---#\n';
+		code += '// #' + title + '#\n';
 		code += builder.flow.code.replace( /^\t/mg, '' ) + '\n';
 		code += '/* ... */ ' + snippet + ' /* ... */\n';
-		code += '// #-----------------#\n';
+		code += '// #' + border + '#\n';
 
 		if ( callback !== null ) {
 
-			callback( code );
+			callback( builder, code );
 
 		} else {
 
@@ -65,6 +68,15 @@ class DebugNode extends TempNode {
 
 export default DebugNode;
 
+/**
+ * TSL function for creating a debug node.
+ *
+ * @tsl
+ * @function
+ * @param {Node} node - The node to debug.
+ * @param {?Function} [callback=null] - Optional callback function to handle the debug output.
+ * @returns {DebugNode}
+ */
 export const debug = ( node, callback = null ) => nodeObject( new DebugNode( nodeObject( node ), callback ) );
 
 addMethodChaining( 'debug', debug );

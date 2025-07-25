@@ -15,7 +15,7 @@ const hasOwnProp = Object.prototype.hasOwnProperty;
 let data;
 let view;
 
-let outdir = path.normalize( env.opts.destination );
+const outdir = path.normalize( env.opts.destination );
 const themeOpts = ( env.opts.themeOpts ) || {};
 
 function mkdirSync( filepath ) {
@@ -432,11 +432,17 @@ function buildGlobalsNav( globals, seen ) {
 
 		globals.forEach( ( { kind, longname, name, tags } ) => {
 
-			if ( kind !== 'typedef' && ! hasOwnProp.call( seen, longname ) && Array.isArray( tags ) && tags[ 0 ].title === 'tsl' ) {
+			if ( kind !== 'typedef' && ! hasOwnProp.call( seen, longname ) && Array.isArray( tags ) ) {
 
-				tslNav += `<li data-name="${longname}">${linkto( longname, name )}</li>`;
+				const tslTag = tags.find( tag => tag.title === 'tsl' );
 
-				seen[ longname ] = true;
+				if ( tslTag !== undefined ) {
+
+					tslNav += `<li data-name="${longname}">${linkto( longname, name )}</li>`;
+
+					seen[ longname ] = true;
+
+				}
 
 			}
 
@@ -586,14 +592,6 @@ exports.publish = ( taffyData, opts, tutorials ) => {
 
 	} );
 
-	// update outdir if necessary, then create outdir
-	const packageInfo = ( find( { kind: 'package' } ) || [] )[ 0 ];
-	if ( packageInfo && packageInfo.name ) {
-
-		outdir = path.join( outdir, packageInfo.name, ( packageInfo.version || '' ) );
-
-	}
-
 	fs.mkPath( outdir );
 
 	// copy the template's static files to outdir
@@ -708,6 +706,24 @@ exports.publish = ( taffyData, opts, tutorials ) => {
 			addSignatureTypes( doclet );
 			addAttribs( doclet );
 			doclet.kind = 'member';
+
+		}
+
+	} );
+
+	// prepare import statements
+	data().each( doclet => {
+
+		if ( doclet.kind === 'class' || doclet.kind === 'module' ) {
+
+			const tags = doclet.tags;
+
+			if ( Array.isArray( tags ) ) {
+
+				const importTag = tags.find( tag => tag.title === 'three_import' );
+				doclet.import = ( importTag !== undefined ) ? importTag.text : null;
+
+			}
 
 		}
 
