@@ -1,4 +1,4 @@
-export const REVISION = '177';
+export const REVISION = '178';
 
 /**
  * Represents mouse buttons and interaction types in context of controls.
@@ -1615,8 +1615,8 @@ export const InterpolationSamplingMode = {
 	NORMAL: 'normal',
 	CENTROID: 'centroid',
 	SAMPLE: 'sample',
-	FLAT_FIRST: 'flat first',
-	FLAT_EITHER: 'flat either'
+	FIRST: 'first',
+	EITHER: 'either'
 };
 
 /**

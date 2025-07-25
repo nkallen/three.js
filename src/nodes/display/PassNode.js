@@ -126,7 +126,16 @@ class PassMultipleTextureNode extends PassTextureNode {
 
 	clone() {
 
-		return new this.constructor( this.passNode, this.textureName, this.previousTexture );
+		const newNode = new this.constructor( this.passNode, this.textureName, this.previousTexture );
+		newNode.uvNode = this.uvNode;
+		newNode.levelNode = this.levelNode;
+		newNode.biasNode = this.biasNode;
+		newNode.sampler = this.sampler;
+		newNode.depthNode = this.depthNode;
+		newNode.compareNode = this.compareNode;
+		newNode.gradNode = this.gradNode;
+
+		return newNode;
 
 	}
 
@@ -585,13 +594,6 @@ class PassNode extends TempNode {
 	setup( { renderer } ) {
 
 		this.renderTarget.samples = this.options.samples === undefined ? renderer.samples : this.options.samples;
-
-		// TODO: Disable MSAA for WebGL backend for now
-		if ( renderer.backend.isWebGLBackend === true ) {
-
-			this.renderTarget.samples = 0;
-
-		}
 
 		this.renderTarget.texture.type = renderer.getColorBufferType();
 

@@ -138,6 +138,16 @@ class WebGPUBindingUtils {
 
 				}
 
+				if ( binding.texture.isArrayTexture ) {
+
+					storageTexture.viewDimension = GPUTextureViewDimension.TwoDArray;
+
+				} else if ( binding.texture.is3DTexture ) {
+
+					storageTexture.viewDimension = GPUTextureViewDimension.ThreeD;
+
+				}
+
 				bindingGPU.storageTexture = storageTexture;
 
 			} else if ( binding.isSampledTexture ) {

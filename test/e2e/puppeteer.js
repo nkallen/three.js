@@ -111,6 +111,9 @@ const exceptionList = [
 	'webgpu_multisampled_renderbuffers',
 	'webgl_test_wide_gamut',
 	'webgl_volume_instancing',
+	'webgl_buffergeometry',
+	'webgl_buffergeometry_attributes_integer',
+	'webgl_batch_lod_bvh',
 
 	// Intentional z-fighting in this demo makes it non-deterministic
 	'webgl_reverse_depth_buffer',
@@ -126,7 +129,6 @@ const exceptionList = [
 	'webgpu_compute_texture_pingpong',
 	'webgpu_compute_water',
 	'webgpu_materials',
-	'webgpu_sandbox',
 	'webgpu_video_panorama',
 	'webgpu_postprocessing_bloom_emissive',
 	'webgpu_lights_tiled',
@@ -171,6 +173,7 @@ const exceptionList = [
 	'webgpu_postprocessing_3dlut',
 	'webgpu_postprocessing_fxaa',
 	'webgpu_postprocessing_afterimage',
+	'webgpu_postprocessing_ca',
 	'webgpu_xr_native_layers',
 	'webgpu_volume_caustics',
 

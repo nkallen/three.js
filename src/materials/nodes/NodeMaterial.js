@@ -13,7 +13,7 @@ import { positionLocal, positionView } from '../../nodes/accessors/Position.js';
 import { skinning } from '../../nodes/accessors/SkinningNode.js';
 import { morphReference } from '../../nodes/accessors/MorphNode.js';
 import { mix } from '../../nodes/math/MathNode.js';
-import { namespace, float, vec3, vec4, bool } from '../../nodes/tsl/TSLBase.js';
+import { float, vec3, vec4, bool } from '../../nodes/tsl/TSLBase.js';
 import AONode from '../../nodes/lighting/AONode.js';
 import { lightingContext } from '../../nodes/lighting/LightingContextNode.js';
 import IrradianceNode from '../../nodes/lighting/IrradianceNode.js';
@@ -24,6 +24,8 @@ import NodeMaterialObserver from './manager/NodeMaterialObserver.js';
 import getAlphaHashThreshold from '../../nodes/functions/material/getAlphaHashThreshold.js';
 import { modelViewMatrix } from '../../nodes/accessors/ModelNode.js';
 import { vertexColor } from '../../nodes/accessors/VertexColorNode.js';
+import { premultiplyAlpha } from '../../nodes/display/BlendModes.js';
+import { subBuild } from '../../nodes/core/SubBuildNode.js';
 
 /**
  * Base class for all node materials.
@@ -444,7 +446,7 @@ class NodeMaterial extends Material {
 	 */
 	setup( builder ) {
 
-		builder.context.setupNormal = () => this.setupNormal( builder );
+		builder.context.setupNormal = () => subBuild( this.setupNormal( builder ), 'NORMAL', 'vec3' );
 		builder.context.setupPositionView = () => this.setupPositionView( builder );
 		builder.context.setupModelViewProjection = () => this.setupModelViewProjection( builder );
 
@@ -455,7 +457,7 @@ class NodeMaterial extends Material {
 
 		builder.addStack();
 
-		const mvp = this.setupVertex( builder );
+		const mvp = subBuild( this.setupVertex( builder ), 'VERTEX' );
 
 		const vertexNode = this.vertexNode || mvp;
 
@@ -767,7 +769,7 @@ class NodeMaterial extends Material {
 
 		if ( this.positionNode !== null ) {
 
-			positionLocal.assign( namespace( this.positionNode, 'POSITION' ) );
+			positionLocal.assign( subBuild( this.positionNode, 'POSITION', 'vec3' ) );
 
 		}
 
@@ -1078,6 +1080,19 @@ class NodeMaterial extends Material {
 	}
 
 	/**
+	 * Setups premultiplied alpha.
+	 *
+	 * @param {NodeBuilder} builder - The current node builder.
+	 * @param {Node<vec4>} outputNode - The existing output node.
+	 * @return {Node<vec4>} The output node.
+	 */
+	setupPremultipliedAlpha( builder, outputNode ) {
+
+		return premultiplyAlpha( outputNode );
+
+	}
+
+	/**
 	 * Setups the output node.
 	 *
 	 * @param {NodeBuilder} builder - The current node builder.
@@ -1091,6 +1106,14 @@ class NodeMaterial extends Material {
 		if ( this.fog === true ) {
 
 			outputNode = this.setupFog( builder, outputNode );
+
+		}
+
+		// PREMULTIPLIED ALPHA
+
+		if ( this.premultipliedAlpha === true ) {
+
+			outputNode = this.setupPremultipliedAlpha( builder, outputNode );
 
 		}
 
