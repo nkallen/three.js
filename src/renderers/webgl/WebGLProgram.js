@@ -57,7 +57,9 @@ function getEncodingComponents( colorSpace ) {
 function getShaderErrors( gl, shader, type ) {
 
 	const status = gl.getShaderParameter( shader, gl.COMPILE_STATUS );
-	const errors = gl.getShaderInfoLog( shader ).trim();
+
+	const shaderInfoLog = gl.getShaderInfoLog( shader ) || '';
+	const errors = shaderInfoLog.trim();
 
 	if ( status && errors === '' ) return '';
 
@@ -561,8 +563,8 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.bumpMap ? '#define USE_BUMPMAP' : '',
 			parameters.normalMap ? '#define USE_NORMALMAP' : '',
 			parameters.normalMapMode === TriPlanarMapping ? '#define USE_NORMALMAP_TRIPLANAR' : parameters.normalMapMode === CylindricalMapping ? '#define USE_NORMALMAP_CYLINDRICAL' : parameters.normalMapMode === UVMapping ? '#define USE_NORMALMAP_UV' : '',
-			parameters.normalMapObjectSpace && [UVMapping, CylindricalMapping].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_OBJECTSPACE' : '',
-			parameters.normalMapTangentSpace && [UVMapping, CylindricalMapping].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_TANGENTSPACE' : '',
+			parameters.normalMapObjectSpace && [ UVMapping, CylindricalMapping ].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_OBJECTSPACE' : '',
+			parameters.normalMapTangentSpace && [ UVMapping, CylindricalMapping ].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_TANGENTSPACE' : '',
 			parameters.displacementMap ? '#define USE_DISPLACEMENTMAP' : '',
 			parameters.emissiveMap ? '#define USE_EMISSIVEMAP' : '',
 
@@ -572,9 +574,9 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.clearcoatMap ? '#define USE_CLEARCOATMAP' : '',
 			parameters.clearcoatRoughnessMap ? '#define USE_CLEARCOAT_ROUGHNESSMAP' : '',
 			parameters.clearcoatNormalMap ? '#define USE_CLEARCOAT_NORMALMAP' : '',
-			parameters.clearcoatNormalMapMode === TriPlanarMapping ? '#define USE_CLEARCOAT_NORMALMAP_TRIPLANAR' 
-      : parameters.clearcoatNormalMapMode === CylindricalMapping ? '#define USE_CLEARCOAT_NORMALMAP_CYLINDRICAL'
-      : parameters.clearcoatNormalMapMode === UVMapping ? '#define USE_CLEARCOAT_NORMALMAP_UV' : '',
+			parameters.clearcoatNormalMapMode === TriPlanarMapping ? '#define USE_CLEARCOAT_NORMALMAP_TRIPLANAR'
+				: parameters.clearcoatNormalMapMode === CylindricalMapping ? '#define USE_CLEARCOAT_NORMALMAP_CYLINDRICAL'
+					: parameters.clearcoatNormalMapMode === UVMapping ? '#define USE_CLEARCOAT_NORMALMAP_UV' : '',
 
 			parameters.iridescenceMap ? '#define USE_IRIDESCENCEMAP' : '',
 			parameters.iridescenceThicknessMap ? '#define USE_IRIDESCENCE_THICKNESSMAP' : '',
@@ -662,7 +664,7 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.numLightProbes > 0 ? '#define USE_LIGHT_PROBES' : '',
 
 			parameters.logarithmicDepthBuffer ? '#define USE_LOGDEPTHBUF' : '',
-			parameters.reverseDepthBuffer ? '#define USE_REVERSEDEPTHBUF' : '',
+			parameters.reversedDepthBuffer ? '#define USE_REVERSEDEPTHBUF' : '',
 
 			'uniform mat4 modelMatrix;',
 			'uniform mat4 modelViewMatrix;',
@@ -768,8 +770,8 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.bumpMap ? '#define USE_BUMPMAP' : '',
 			parameters.normalMap ? '#define USE_NORMALMAP' : '',
 			parameters.normalMapMode === TriPlanarMapping ? '#define USE_NORMALMAP_TRIPLANAR' : parameters.normalMapMode === CylindricalMapping ? '#define USE_NORMALMAP_CYLINDRICAL' : parameters.normalMapMode === UVMapping ? '#define USE_NORMALMAP_UV' : '',
-			parameters.normalMapObjectSpace && [UVMapping, CylindricalMapping].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_OBJECTSPACE' : '',
-			parameters.normalMapTangentSpace && [UVMapping, CylindricalMapping].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_TANGENTSPACE' : '',
+			parameters.normalMapObjectSpace && [ UVMapping, CylindricalMapping ].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_OBJECTSPACE' : '',
+			parameters.normalMapTangentSpace && [ UVMapping, CylindricalMapping ].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_TANGENTSPACE' : '',
 			parameters.emissiveMap ? '#define USE_EMISSIVEMAP' : '',
 
 			parameters.anisotropy ? '#define USE_ANISOTROPY' : '',
@@ -779,9 +781,9 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.clearcoatMap ? '#define USE_CLEARCOATMAP' : '',
 			parameters.clearcoatRoughnessMap ? '#define USE_CLEARCOAT_ROUGHNESSMAP' : '',
 			parameters.clearcoatNormalMap ? '#define USE_CLEARCOAT_NORMALMAP' : '',
-			parameters.clearcoatNormalMapMode === TriPlanarMapping ? '#define USE_CLEARCOAT_NORMALMAP_TRIPLANAR' 
-			: parameters.clearcoatNormalMapMode === CylindricalMapping ? '#define USE_CLEARCOAT_NORMALMAP_CYLINDRICAL'
-			: parameters.clearcoatNormalMapMode === UVMapping ? '#define USE_CLEARCOAT_NORMALMAP_UV' : '',
+			parameters.clearcoatNormalMapMode === TriPlanarMapping ? '#define USE_CLEARCOAT_NORMALMAP_TRIPLANAR'
+				: parameters.clearcoatNormalMapMode === CylindricalMapping ? '#define USE_CLEARCOAT_NORMALMAP_CYLINDRICAL'
+					: parameters.clearcoatNormalMapMode === UVMapping ? '#define USE_CLEARCOAT_NORMALMAP_UV' : '',
 
 			parameters.dispersion ? '#define USE_DISPERSION' : '',
 
@@ -838,7 +840,7 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.decodeVideoTextureEmissive ? '#define DECODE_VIDEO_TEXTURE_EMISSIVE' : '',
 
 			parameters.logarithmicDepthBuffer ? '#define USE_LOGDEPTHBUF' : '',
-			parameters.reverseDepthBuffer ? '#define USE_REVERSEDEPTHBUF' : '',
+			parameters.reversedDepthBuffer ? '#define USE_REVERSEDEPTHBUF' : '',
 
 			'uniform mat4 modelViewMatrix;',
 			'uniform mat4 viewMatrix;',
@@ -939,9 +941,13 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 		// check for link errors
 		if ( renderer.debug.checkShaderErrors ) {
 
-			const programLog = gl.getProgramInfoLog( program ).trim();
-			const vertexLog = gl.getShaderInfoLog( glVertexShader ).trim();
-			const fragmentLog = gl.getShaderInfoLog( glFragmentShader ).trim();
+			const programInfoLog = gl.getProgramInfoLog( program ) || '';
+			const vertexShaderInfoLog = gl.getShaderInfoLog( glVertexShader ) || '';
+			const fragmentShaderInfoLog = gl.getShaderInfoLog( glFragmentShader ) || '';
+
+			const programLog = programInfoLog.trim();
+			const vertexLog = vertexShaderInfoLog.trim();
+			const fragmentLog = fragmentShaderInfoLog.trim();
 
 			let runnable = true;
 			let haveDiagnostics = true;

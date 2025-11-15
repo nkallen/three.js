@@ -9,6 +9,7 @@ import { WebGLAnimation } from '../webgl/WebGLAnimation.js';
 import { WebGLRenderTarget } from '../WebGLRenderTarget.js';
 import { WebXRController } from './WebXRController.js';
 import { DepthTexture } from '../../textures/DepthTexture.js';
+import { ExternalTexture } from '../../textures/ExternalTexture.js';
 import { DepthFormat, DepthStencilFormat, RGBAFormat, UnsignedByteType, UnsignedIntType, UnsignedInt248Type } from '../../constants.js';
 import { WebXRDepthSensing } from './WebXRDepthSensing.js';
 
@@ -52,6 +53,7 @@ class WebXRManager extends EventDispatcher {
 		let xrFrame = null;
 
 		const depthSensing = new WebXRDepthSensing();
+		const cameraAccessTextures = {};
 		const attributes = gl.getContextAttributes();
 
 		let initialRenderTarget = null;
@@ -232,6 +234,11 @@ class WebXRManager extends EventDispatcher {
 			_currentDepthFar = null;
 
 			depthSensing.reset();
+			for ( const key in cameraAccessTextures ) {
+
+				delete cameraAccessTextures[ key ];
+
+			}
 
 			// restore framebuffer/rendering state
 
@@ -398,9 +405,15 @@ class WebXRManager extends EventDispatcher {
 				currentPixelRatio = renderer.getPixelRatio();
 				renderer.getSize( currentSize );
 
+				if ( typeof XRWebGLBinding !== 'undefined' ) {
+
+					glBinding = new XRWebGLBinding( session, gl );
+
+				}
+
 				// Check that the browser implements the necessary APIs to use an
 				// XRProjectionLayer rather than an XRWebGLLayer
-				const useLayers = typeof XRWebGLBinding !== 'undefined' && 'createProjectionLayer' in XRWebGLBinding.prototype;
+				const useLayers = glBinding !== null && 'createProjectionLayer' in XRWebGLBinding.prototype;
 
 				if ( ! useLayers ) {
 
@@ -452,8 +465,6 @@ class WebXRManager extends EventDispatcher {
 						depthFormat: glDepthFormat,
 						scaleFactor: framebufferScaleFactor
 					};
-
-					glBinding = new XRWebGLBinding( session, gl );
 
 					glProjLayer = glBinding.createProjectionLayer( projectionlayerInit );
 
@@ -722,9 +733,10 @@ class WebXRManager extends EventDispatcher {
 
 			}
 
-			cameraL.layers.mask = camera.layers.mask | 0b010;
-			cameraR.layers.mask = camera.layers.mask | 0b100;
-			cameraXR.layers.mask = cameraL.layers.mask | cameraR.layers.mask;
+			// inherit camera layers and enable eye layers (1 = left, 2 = right)
+			cameraXR.layers.mask = camera.layers.mask | 0b110;
+			cameraL.layers.mask = cameraXR.layers.mask & 0b011;
+			cameraR.layers.mask = cameraXR.layers.mask & 0b101;
 
 			const parent = camera.parent;
 			const cameras = cameraXR.cameras;
@@ -805,7 +817,7 @@ class WebXRManager extends EventDispatcher {
 		/**
 		 * Returns the amount of foveation used by the XR compositor for the projection layer.
 		 *
-		 * @return {number} The amount of foveation.
+		 * @return {number|undefined} The amount of foveation.
 		 */
 		this.getFoveation = function () {
 
@@ -865,6 +877,19 @@ class WebXRManager extends EventDispatcher {
 		this.getDepthSensingMesh = function () {
 
 			return depthSensing.getMesh( cameraXR );
+
+		};
+
+		/**
+		 * Retrieves an opaque texture from the view-aligned {@link XRCamera}.
+		 * Only available during the current animation loop.
+		 *
+		 * @param {XRCamera} xrCamera - The camera to query.
+		 * @return {?Texture} An opaque texture representing the current raw camera frame.
+		 */
+		this.getCameraTexture = function ( xrCamera ) {
+
+			return cameraAccessTextures[ xrCamera ];
 
 		};
 
@@ -973,7 +998,42 @@ class WebXRManager extends EventDispatcher {
 
 					if ( depthData && depthData.isValid && depthData.texture ) {
 
-						depthSensing.init( renderer, depthData, session.renderState );
+						depthSensing.init( depthData, session.renderState );
+
+					}
+
+				}
+
+				const cameraAccessEnabled = enabledFeatures &&
+				    enabledFeatures.includes( 'camera-access' );
+
+				if ( cameraAccessEnabled ) {
+
+					renderer.state.unbindTexture();
+
+					if ( glBinding ) {
+
+						for ( let i = 0; i < views.length; i ++ ) {
+
+							const camera = views[ i ].camera;
+
+							if ( camera ) {
+
+								let cameraTex = cameraAccessTextures[ camera ];
+
+								if ( ! cameraTex ) {
+
+									cameraTex = new ExternalTexture();
+									cameraAccessTextures[ camera ] = cameraTex;
+
+								}
+
+								const glTexture = glBinding.getCameraImage( camera );
+								cameraTex.sourceTexture = glTexture;
+
+							}
+
+						}
 
 					}
 
