@@ -24,6 +24,8 @@ export const PCFShadowFilter = TSL.PCFShadowFilter;
 export const PCFSoftShadowFilter = TSL.PCFSoftShadowFilter;
 export const PI = TSL.PI;
 export const PI2 = TSL.PI2;
+export const TWO_PI = TSL.TWO_PI;
+export const HALF_PI = TSL.HALF_PI;
 export const PointShadowFilter = TSL.PointShadowFilter;
 export const Return = TSL.Return;
 export const Schlick_to_F0 = TSL.Schlick_to_F0;
@@ -196,6 +198,7 @@ export const getDirection = TSL.getDirection;
 export const getDistanceAttenuation = TSL.getDistanceAttenuation;
 export const getGeometryRoughness = TSL.getGeometryRoughness;
 export const getNormalFromDepth = TSL.getNormalFromDepth;
+export const interleavedGradientNoise = TSL.interleavedGradientNoise;
 export const getParallaxCorrectNormal = TSL.getParallaxCorrectNormal;
 export const getRoughness = TSL.getRoughness;
 export const getScreenPosition = TSL.getScreenPosition;
@@ -396,6 +399,8 @@ export const objectRadius = TSL.objectRadius;
 export const objectScale = TSL.objectScale;
 export const objectViewPosition = TSL.objectViewPosition;
 export const objectWorldMatrix = TSL.objectWorldMatrix;
+export const OnBeforeObjectUpdate = TSL.OnBeforeObjectUpdate;
+export const OnBeforeMaterialUpdate = TSL.OnBeforeMaterialUpdate;
 export const OnObjectUpdate = TSL.OnObjectUpdate;
 export const OnMaterialUpdate = TSL.OnMaterialUpdate;
 export const oneMinus = TSL.oneMinus;
@@ -547,6 +552,7 @@ export const textureBicubicLevel = TSL.textureBicubicLevel;
 export const textureCubeUV = TSL.textureCubeUV;
 export const textureLoad = TSL.textureLoad;
 export const textureSize = TSL.textureSize;
+export const textureLevel = TSL.textureLevel;
 export const textureStore = TSL.textureStore;
 export const thickness = TSL.thickness;
 export const time = TSL.time;
@@ -623,5 +629,5 @@ for ( const key of Object.keys( THREE.TSL ) ) {
 
 }
 
-console.log( code );
+log( code );
 //*/
