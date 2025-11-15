@@ -366,7 +366,6 @@ MathNode.INVERSE = 'inverse';
 
 // 2 inputs
 
-MathNode.BITCAST = 'bitcast';
 MathNode.EQUALS = 'equals';
 MathNode.MIN = 'min';
 MathNode.MAX = 'max';
@@ -768,17 +767,6 @@ export const inverse = /*@__PURE__*/ nodeProxyIntent( MathNode, MathNode.INVERSE
 // 2 inputs
 
 /**
- * Reinterpret the bit representation of a value in one type as a value in another type.
- *
- * @tsl
- * @function
- * @param {Node | number} x - The parameter.
- * @param {string} y - The new type.
- * @returns {Node}
- */
-export const bitcast = /*@__PURE__*/ nodeProxyIntent( MathNode, MathNode.BITCAST ).setParameterLength( 2 );
-
-/**
  * Returns `true` if `x` equals `y`.
  *
  * @tsl
@@ -900,7 +888,7 @@ export const pow = /*@__PURE__*/ nodeProxyIntent( MathNode, MathNode.POW ).setPa
  * @param {Node | number} x - The first parameter.
  * @returns {Node}
  */
-export const pow2 = /*@__PURE__*/ nodeProxyIntent( MathNode, MathNode.POW, 2 ).setParameterLength( 1 );
+export const pow2 = ( x ) => mul( x, x );
 
 /**
  * Returns the cube of the parameter.
@@ -910,7 +898,7 @@ export const pow2 = /*@__PURE__*/ nodeProxyIntent( MathNode, MathNode.POW, 2 ).s
  * @param {Node | number} x - The first parameter.
  * @returns {Node}
  */
-export const pow3 = /*@__PURE__*/ nodeProxyIntent( MathNode, MathNode.POW, 3 ).setParameterLength( 1 );
+export const pow3 = ( x ) => mul( x, x, x );
 
 /**
  * Returns the fourth power of the parameter.
@@ -920,7 +908,7 @@ export const pow3 = /*@__PURE__*/ nodeProxyIntent( MathNode, MathNode.POW, 3 ).s
  * @param {Node | number} x - The first parameter.
  * @returns {Node}
  */
-export const pow4 = /*@__PURE__*/ nodeProxyIntent( MathNode, MathNode.POW, 4 ).setParameterLength( 1 );
+export const pow4 = ( x ) => mul( x, x, x, x );
 
 /**
  * Transforms the direction of a vector by a matrix and then normalizes the result.

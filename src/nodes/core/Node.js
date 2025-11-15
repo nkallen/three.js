@@ -172,7 +172,7 @@ class Node extends EventDispatcher {
 	onUpdate( callback, updateType ) {
 
 		this.updateType = updateType;
-		this.update = callback.bind( this.getSelf() );
+		this.update = callback.bind( this );
 
 		return this;
 
@@ -225,23 +225,9 @@ class Node extends EventDispatcher {
 	 */
 	onReference( callback ) {
 
-		this.updateReference = callback.bind( this.getSelf() );
+		this.updateReference = callback.bind( this );
 
 		return this;
-
-	}
-
-	/**
-	 * The `this` reference might point to a Proxy so this method can be used
-	 * to get the reference to the actual node instance.
-	 *
-	 * @return {Node} A reference to the node.
-	 */
-	getSelf() {
-
-		// Returns non-node object.
-
-		return this.self || this;
 
 	}
 
@@ -563,7 +549,7 @@ class Node extends EventDispatcher {
 	 * This state builds the output node and returns the resulting shader string.
 	 *
 	 * @param {NodeBuilder} builder - The current node builder.
-	 * @param {?string} output - Can be used to define the output type.
+	 * @param {?string} [output] - Can be used to define the output type.
 	 * @return {?string} The generated shader string.
 	 */
 	generate( builder, output ) {
@@ -627,8 +613,8 @@ class Node extends EventDispatcher {
 	 * - **generate**: Generates the shader code for the node. Returns the generated shader string.
 	 *
 	 * @param {NodeBuilder} builder - The current node builder.
-	 * @param {string|Node|null} [output=null] - Can be used to define the output type.
-	 * @return {Node|string|null} The result of the build process, depending on the build stage.
+	 * @param {?(string|Node)} [output=null] - Can be used to define the output type.
+	 * @return {?(Node|string)} The result of the build process, depending on the build stage.
 	 */
 	build( builder, output = null ) {
 
@@ -765,6 +751,16 @@ class Node extends EventDispatcher {
 
 			}
 
+			if ( result === '' && output !== null && output !== 'void' && output !== 'OutputType' ) {
+
+				// if no snippet is generated, return a default value
+
+				console.error( `THREE.TSL: Invalid generated code, expected a "${ output }".` );
+
+				result = builder.generateConst( output );
+
+			}
+
 		}
 
 		builder.removeChain( this );
@@ -777,7 +773,7 @@ class Node extends EventDispatcher {
 	/**
 	 * Returns the child nodes as a JSON object.
 	 *
-	 * @return {Array<Object>} An iterable list of serialized child objects as JSON.
+	 * @return {Generator<Object>} An iterable list of serialized child objects as JSON.
 	 */
 	getSerializeChildren() {
 

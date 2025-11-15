@@ -13,6 +13,7 @@ import { Vector4 } from '../../math/Vector4.js';
 import { Matrix4 } from '../../math/Matrix4.js';
 import { RenderTarget } from '../../core/RenderTarget.js';
 import { DepthTexture } from '../../textures/DepthTexture.js';
+import { warnOnce } from '../../utils.js';
 
 const _reflectorPlane = new Plane();
 const _normal = new Vector3();
@@ -61,10 +62,11 @@ class ReflectorNode extends TextureNode {
 	 *
 	 * @param {Object} [parameters={}] - An object holding configuration parameters.
 	 * @param {Object3D} [parameters.target=new Object3D()] - The 3D object the reflector is linked to.
-	 * @param {number} [parameters.resolution=1] - The resolution scale.
+	 * @param {number} [parameters.resolutionScale=1] - The resolution scale.
 	 * @param {boolean} [parameters.generateMipmaps=false] - Whether mipmaps should be generated or not.
 	 * @param {boolean} [parameters.bounces=true] - Whether reflectors can render other reflector nodes or not.
 	 * @param {boolean} [parameters.depth=false] - Whether depth data should be generated or not.
+	 * @param {number} [parameters.samples] - Anti-Aliasing samples of the internal render-target.
 	 * @param {TextureNode} [parameters.defaultTexture] - The default texture node.
 	 * @param {ReflectorBaseNode} [parameters.reflector] - The reflector base node.
 	 */
@@ -204,10 +206,11 @@ class ReflectorBaseNode extends Node {
 	 * @param {TextureNode} textureNode - Represents the rendered reflections as a texture node.
 	 * @param {Object} [parameters={}] - An object holding configuration parameters.
 	 * @param {Object3D} [parameters.target=new Object3D()] - The 3D object the reflector is linked to.
-	 * @param {number} [parameters.resolution=1] - The resolution scale.
+	 * @param {number} [parameters.resolutionScale=1] - The resolution scale.
 	 * @param {boolean} [parameters.generateMipmaps=false] - Whether mipmaps should be generated or not.
 	 * @param {boolean} [parameters.bounces=true] - Whether reflectors can render other reflector nodes or not.
 	 * @param {boolean} [parameters.depth=false] - Whether depth data should be generated or not.
+	 * @param {number} [parameters.samples] - Anti-Aliasing samples of the internal render-target.
 	 */
 	constructor( textureNode, parameters = {} ) {
 
@@ -215,10 +218,11 @@ class ReflectorBaseNode extends Node {
 
 		const {
 			target = new Object3D(),
-			resolution = 1,
+			resolutionScale = 1,
 			generateMipmaps = false,
 			bounces = true,
-			depth = false
+			depth = false,
+			samples = 0
 		} = parameters;
 
 		/**
@@ -242,7 +246,15 @@ class ReflectorBaseNode extends Node {
 		 * @type {number}
 		 * @default {1}
 		 */
-		this.resolution = resolution;
+		this.resolutionScale = resolutionScale;
+
+		if ( parameters.resolution !== undefined ) {
+
+			warnOnce( 'THREE.ReflectorNode: The "resolution" parameter has been renamed to "resolutionScale".' ); // @deprecated r180
+
+			this.resolutionScale = parameters.resolution;
+
+		}
 
 		/**
 		 * Whether mipmaps should be generated or not.
@@ -267,6 +279,14 @@ class ReflectorBaseNode extends Node {
 		 * @default {false}
 		 */
 		this.depth = depth;
+
+		/**
+		 * The number of anti-aliasing samples for the render-target
+		 *
+		 * @type {number}
+		 * @default {0}
+		 */
+		this.samples = samples;
 
 		/**
 		 * The `updateBeforeType` is set to `NodeUpdateType.RENDER` when {@link ReflectorBaseNode#bounces}
@@ -321,7 +341,7 @@ class ReflectorBaseNode extends Node {
 	 */
 	_updateResolution( renderTarget, renderer ) {
 
-		const resolution = this.resolution;
+		const resolution = this.resolutionScale;
 
 		renderer.getDrawingBufferSize( _size );
 
@@ -388,7 +408,7 @@ class ReflectorBaseNode extends Node {
 
 		if ( renderTarget === undefined ) {
 
-			renderTarget = new RenderTarget( 0, 0, { type: HalfFloatType } );
+			renderTarget = new RenderTarget( 0, 0, { type: HalfFloatType, samples: this.samples } );
 
 			if ( this.generateMipmaps === true ) {
 
@@ -557,6 +577,29 @@ class ReflectorBaseNode extends Node {
 
 	}
 
+	/**
+	 * The resolution scale.
+	 *
+	 * @deprecated
+	 * @type {number}
+	 * @default {1}
+	 */
+	get resolution() {
+
+		warnOnce( 'THREE.ReflectorNode: The "resolution" property has been renamed to "resolutionScale".' ); // @deprecated r180
+
+		return this.resolutionScale;
+
+	}
+
+	set resolution( value ) {
+
+		warnOnce( 'THREE.ReflectorNode: The "resolution" property has been renamed to "resolutionScale".' ); // @deprecated r180
+
+		this.resolutionScale = value;
+
+	}
+
 }
 
 /**
@@ -570,6 +613,7 @@ class ReflectorBaseNode extends Node {
  * @param {boolean} [parameters.generateMipmaps=false] - Whether mipmaps should be generated or not.
  * @param {boolean} [parameters.bounces=true] - Whether reflectors can render other reflector nodes or not.
  * @param {boolean} [parameters.depth=false] - Whether depth data should be generated or not.
+ * @param {number} [parameters.samples] - Anti-Aliasing samples of the internal render-target.
  * @param {TextureNode} [parameters.defaultTexture] - The default texture node.
  * @param {ReflectorBaseNode} [parameters.reflector] - The reflector base node.
  * @returns {ReflectorNode}

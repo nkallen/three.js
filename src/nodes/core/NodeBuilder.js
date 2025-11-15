@@ -260,6 +260,13 @@ class NodeBuilder {
 		this.structs = { vertex: [], fragment: [], compute: [], index: 0 };
 
 		/**
+		 * This dictionary holds the types of the builder.
+		 *
+		 * @type {Object}
+		 */
+		this.types = { vertex: [], fragment: [], compute: [], index: 0 };
+
+		/**
 		 * This dictionary holds the bindings for each shader stage.
 		 *
 		 * @type {Object}
@@ -722,7 +729,7 @@ class NodeBuilder {
 
 			if ( updateType !== NodeUpdateType.NONE ) {
 
-				this.updateNodes.push( node.getSelf() );
+				this.updateNodes.push( node );
 
 			}
 
@@ -735,13 +742,13 @@ class NodeBuilder {
 
 			if ( updateBeforeType !== NodeUpdateType.NONE ) {
 
-				this.updateBeforeNodes.push( node.getSelf() );
+				this.updateBeforeNodes.push( node );
 
 			}
 
 			if ( updateAfterType !== NodeUpdateType.NONE ) {
 
-				this.updateAfterNodes.push( node.getSelf() );
+				this.updateAfterNodes.push( node );
 
 			}
 
@@ -823,6 +830,22 @@ class NodeBuilder {
 	getMethod( method ) {
 
 		return method;
+
+	}
+
+	/**
+	 * Returns the native snippet for a ternary operation. E.g. GLSL would output
+	 * a ternary op as `cond ? x : y` whereas WGSL would output it as `select(y, x, cond)`
+	 *
+	 * @abstract
+	 * @param {string} condSnippet - The condition determining which expression gets resolved.
+	 * @param {string} ifSnippet - The expression to resolve to if the condition is true.
+	 * @param {string} elseSnippet - The expression to resolve to if the condition is false.
+	 * @return {string} The resolved method name.
+	 */
+	getTernary( /* condSnippet, ifSnippet, elseSnippet*/ ) {
+
+		return null;
 
 	}
 
@@ -1143,7 +1166,6 @@ class NodeBuilder {
 		return type + '( ' + snippets.join( ', ' ) + ' )';
 
 	}
-
 
 	/**
 	 * Generates the shader string for the given type and value.
@@ -1553,7 +1575,9 @@ class NodeBuilder {
 
 		this.stack = stack( this.stack );
 
-		this.stacks.push( getCurrentStack() || this.stack );
+		const previousStack = getCurrentStack();
+
+		this.stacks.push( previousStack );
 		setCurrentStack( this.stack );
 
 		return this.stack;
@@ -1666,6 +1690,20 @@ class NodeBuilder {
 	}
 
 	/**
+	 * Returns an instance of {@link StructType} for the given struct name and shader stage
+	 * or null if not found.
+	 *
+	 * @param {string} name - The name of the struct.
+	 * @param {('vertex'|'fragment'|'compute'|'any')} [shaderStage=this.shaderStage] - The shader stage.
+	 * @return {?StructType} The struct type or null if not found.
+	 */
+	getStructTypeNode( name, shaderStage = this.shaderStage ) {
+
+		return this.types[ shaderStage ][ name ] || null;
+
+	}
+
+	/**
 	 * Returns an instance of {@link StructType} for the given output struct node.
 	 *
 	 * @param {OutputStructNode} node - The output struct node.
@@ -1689,6 +1727,7 @@ class NodeBuilder {
 			structType = new StructType( name, membersLayout );
 
 			this.structs[ shaderStage ].push( structType );
+			this.types[ shaderStage ][ name ] = node;
 
 			nodeData.structType = structType;
 
@@ -2221,8 +2260,8 @@ class NodeBuilder {
 	 *
 	 * @param {Node} node - The node to execute.
 	 * @param {string} buildStage - The build stage to execute the node in.
-	 * @param {Node|string|null} output - Expected output type. For example 'vec3'.
-	 * @return {Node|string|null} The result of the node build.
+	 * @param {?(Node|string)} [output=null] - Expected output type. For example 'vec3'.
+	 * @return {?(Node|string)} The result of the node build.
 	 */
 	flowBuildStage( node, buildStage, output = null ) {
 
@@ -2348,7 +2387,7 @@ class NodeBuilder {
 	 * @param {Node} node - The node to execute.
 	 * @param {?string} output - Expected output type. For example 'vec3'.
 	 * @param {?string} propertyName - The property name to assign the result.
-	 * @return {Object|Node|null} The code flow or node.build() result.
+	 * @return {?(Object|Node)} The code flow or node.build() result.
 	 */
 	flowNodeFromShaderStage( shaderStage, node, output = null, propertyName = null ) {
 
@@ -2616,7 +2655,7 @@ class NodeBuilder {
 	/**
 	 * Returns the closest sub-build layer for the given data.
 	 *
-	 * @param {Node|Set|Array} data - The data to get the closest sub-build layer from.
+	 * @param {Node|Set<string>|Array<string>} data - The data to get the closest sub-build layer from.
 	 * @return {?string} The closest sub-build name or null if none found.
 	 */
 	getClosestSubBuild( data ) {
@@ -2922,11 +2961,6 @@ class NodeBuilder {
 		return `// Three.js r${ REVISION } - Node System\n`;
 
 	}
-
-	/**
-	 * Prevents the node builder from being used as an iterable in TSL.Fn(), avoiding potential runtime errors.
-	 */
-	*[ Symbol.iterator ]() { }
 
 }
 

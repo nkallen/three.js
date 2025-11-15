@@ -19,6 +19,7 @@ export * from './core/OutputStructNode.js';
 export * from './core/MRTNode.js';
 
 // math
+export * from './math/BitcastNode.js';
 export * from './math/Hash.js';
 export * from './math/MathUtils.js';
 export * from './math/TriNoise3D.js';
@@ -55,6 +56,7 @@ export * from './accessors/UniformArrayNode.js';
 export * from './accessors/Bitangent.js';
 export * from './accessors/BufferAttributeNode.js';
 export * from './accessors/BufferNode.js';
+export * from './accessors/BuiltinNode.js';
 export * from './accessors/Camera.js';
 export * from './accessors/VertexColorNode.js';
 export * from './accessors/CubeTextureNode.js';
@@ -129,6 +131,7 @@ export * from './gpgpu/ComputeBuiltinNode.js';
 export * from './gpgpu/BarrierNode.js';
 export * from './gpgpu/WorkgroupInfoNode.js';
 export * from './gpgpu/AtomicFunctionNode.js';
+export * from './gpgpu/SubgroupFunctionNode.js';
 
 // lighting
 export * from './accessors/Lights.js';
