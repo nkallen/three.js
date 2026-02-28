@@ -1,7 +1,19 @@
 export default /* glsl */`
 #ifdef USE_CLEARCOAT_NORMALMAP_TRIPLANAR
 
-	normal = normalize(normalMatrix * transpose(mat3(texture3DMatrix)) * texture2DTriplanarNormal( clearcoatNormalMap, clearcoatNormalMapTransform, clearcoatNormalScale, normalize(mat3(texture3DMatrix) * vModelNormal.xyz), triplanarCoords, triplanarWeights ));
+	clearcoatNormal = normalize(normalMatrix * transpose(mat3(texture3DMatrix)) * texture2DTriplanarNormal( clearcoatNormalMap, clearcoatNormalMapTransform, clearcoatNormalScale, normalize(mat3(texture3DMatrix) * vModelNormal.xyz), triplanarCoords, triplanarWeights ));
+
+	#ifdef FLIP_SIDED
+
+		clearcoatNormal = - clearcoatNormal;
+
+	#endif
+
+	#ifdef DOUBLE_SIDED
+
+		clearcoatNormal = clearcoatNormal * faceDirection;
+
+	#endif
 
 #elif defined( USE_CLEARCOAT_NORMALMAP )
 

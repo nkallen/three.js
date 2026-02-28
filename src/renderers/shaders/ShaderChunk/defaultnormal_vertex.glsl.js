@@ -56,6 +56,12 @@ vec3 transformedNormal = objectNormal;
 
 #endif
 
+#if defined( USE_TRIPLANAR )
+
+	vModelNormal = transformedNormal.xyz;
+
+#endif
+
 transformedNormal = normalMatrix * transformedNormal;
 
 #ifdef FLIP_SIDED

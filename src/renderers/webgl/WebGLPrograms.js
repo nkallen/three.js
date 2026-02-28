@@ -47,6 +47,7 @@ function WebGLPrograms( renderer, cubemaps, cubeuvmaps, extensions, capabilities
 	}
 
 	function getParameters( material, lights, shadows, scene, object ) {
+
 		const fog = scene.fog;
 		const geometry = object.geometry;
 		const environment = material.isMeshStandardMaterial ? scene.environment : null;
@@ -446,7 +447,7 @@ function WebGLPrograms( renderer, cubemaps, cubeuvmaps, extensions, capabilities
 		array.push( parameters.anisotropyMapUv );
 		array.push( parameters.clearcoatMapUv );
 		array.push( parameters.clearcoatNormalMapUv );
-		array.push( parameters.clearcoatNormalMapMode);
+		array.push( parameters.clearcoatNormalMapMode );
 		array.push( parameters.clearcoatRoughnessMapUv );
 		array.push( parameters.iridescenceMapUv );
 		array.push( parameters.iridescenceThicknessMapUv );
