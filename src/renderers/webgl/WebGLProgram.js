@@ -1,7 +1,7 @@
 import { WebGLUniforms } from './WebGLUniforms.js';
 import { WebGLShader } from './WebGLShader.js';
 import { ShaderChunk } from '../shaders/ShaderChunk.js';
-import { NoToneMapping, AddOperation, MixOperation, MultiplyOperation, CubeRefractionMapping, CubeUVReflectionMapping, CubeReflectionMapping, PCFSoftShadowMap, PCFShadowMap, VSMShadowMap, AgXToneMapping, ACESFilmicToneMapping, NeutralToneMapping, CineonToneMapping, CustomToneMapping, ReinhardToneMapping, LinearToneMapping, GLSL3, LinearTransfer, SRGBTransfer, LinearSRGBColorSpace, SRGBColorSpace, LinearDisplayP3ColorSpace, DisplayP3ColorSpace, P3Primaries, Rec709Primaries, TriPlanarMapping, UVMapping, CylindricalMapping } from '../../constants.js';
+import { NoToneMapping, AddOperation, MixOperation, MultiplyOperation, CubeRefractionMapping, CubeUVReflectionMapping, CubeReflectionMapping, PCFSoftShadowMap, PCFShadowMap, VSMShadowMap, AgXToneMapping, ACESFilmicToneMapping, NeutralToneMapping, CineonToneMapping, CustomToneMapping, ReinhardToneMapping, LinearToneMapping, GLSL3, LinearTransfer, SRGBTransfer, TriPlanarMapping, CylindricalMapping, UVMapping } from '../../constants.js';
 import { ColorManagement } from '../../math/ColorManagement.js';
 import { Vector3 } from '../../math/Vector3.js';
 import { Matrix3 } from '../../math/Matrix3.js';
@@ -564,8 +564,8 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.bumpMap ? '#define USE_BUMPMAP' : '',
 			parameters.normalMap ? '#define USE_NORMALMAP' : '',
 			parameters.normalMapMode === TriPlanarMapping ? '#define USE_NORMALMAP_TRIPLANAR' : parameters.normalMapMode === CylindricalMapping ? '#define USE_NORMALMAP_CYLINDRICAL' : parameters.normalMapMode === UVMapping ? '#define USE_NORMALMAP_UV' : '',
-			parameters.normalMapObjectSpace && [UVMapping, CylindricalMapping].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_OBJECTSPACE' : '',
-			parameters.normalMapTangentSpace && [UVMapping, CylindricalMapping].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_TANGENTSPACE' : '',
+			parameters.normalMapObjectSpace && [ UVMapping, CylindricalMapping ].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_OBJECTSPACE' : '',
+			parameters.normalMapTangentSpace && [ UVMapping, CylindricalMapping ].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_TANGENTSPACE' : '',
 			parameters.displacementMap ? '#define USE_DISPLACEMENTMAP' : '',
 			parameters.emissiveMap ? '#define USE_EMISSIVEMAP' : '',
 
@@ -575,9 +575,9 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.clearcoatMap ? '#define USE_CLEARCOATMAP' : '',
 			parameters.clearcoatRoughnessMap ? '#define USE_CLEARCOAT_ROUGHNESSMAP' : '',
 			parameters.clearcoatNormalMap ? '#define USE_CLEARCOAT_NORMALMAP' : '',
-			parameters.clearcoatNormalMapMode === TriPlanarMapping ? '#define USE_CLEARCOAT_NORMALMAP_TRIPLANAR' 
-      : parameters.clearcoatNormalMapMode === CylindricalMapping ? '#define USE_CLEARCOAT_NORMALMAP_CYLINDRICAL'
-      : parameters.clearcoatNormalMapMode === UVMapping ? '#define USE_CLEARCOAT_NORMALMAP_UV' : '',
+			parameters.clearcoatNormalMapMode === TriPlanarMapping ? '#define USE_CLEARCOAT_NORMALMAP_TRIPLANAR'
+				: parameters.clearcoatNormalMapMode === CylindricalMapping ? '#define USE_CLEARCOAT_NORMALMAP_CYLINDRICAL'
+					: parameters.clearcoatNormalMapMode === UVMapping ? '#define USE_CLEARCOAT_NORMALMAP_UV' : '',
 
 			parameters.iridescenceMap ? '#define USE_IRIDESCENCEMAP' : '',
 			parameters.iridescenceThicknessMap ? '#define USE_IRIDESCENCE_THICKNESSMAP' : '',
@@ -771,8 +771,8 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.bumpMap ? '#define USE_BUMPMAP' : '',
 			parameters.normalMap ? '#define USE_NORMALMAP' : '',
 			parameters.normalMapMode === TriPlanarMapping ? '#define USE_NORMALMAP_TRIPLANAR' : parameters.normalMapMode === CylindricalMapping ? '#define USE_NORMALMAP_CYLINDRICAL' : parameters.normalMapMode === UVMapping ? '#define USE_NORMALMAP_UV' : '',
-			parameters.normalMapObjectSpace && [UVMapping, CylindricalMapping].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_OBJECTSPACE' : '',
-			parameters.normalMapTangentSpace && [UVMapping, CylindricalMapping].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_TANGENTSPACE' : '',
+			parameters.normalMapObjectSpace && [ UVMapping, CylindricalMapping ].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_OBJECTSPACE' : '',
+			parameters.normalMapTangentSpace && [ UVMapping, CylindricalMapping ].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_TANGENTSPACE' : '',
 			parameters.emissiveMap ? '#define USE_EMISSIVEMAP' : '',
 
 			parameters.anisotropy ? '#define USE_ANISOTROPY' : '',
@@ -782,9 +782,9 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.clearcoatMap ? '#define USE_CLEARCOATMAP' : '',
 			parameters.clearcoatRoughnessMap ? '#define USE_CLEARCOAT_ROUGHNESSMAP' : '',
 			parameters.clearcoatNormalMap ? '#define USE_CLEARCOAT_NORMALMAP' : '',
-			parameters.clearcoatNormalMapMode === TriPlanarMapping ? '#define USE_CLEARCOAT_NORMALMAP_TRIPLANAR' 
-      : parameters.clearcoatNormalMapMode === CylindricalMapping ? '#define USE_CLEARCOAT_NORMALMAP_CYLINDRICAL'
-      : parameters.clearcoatNormalMapMode === UVMapping ? '#define USE_CLEARCOAT_NORMALMAP_UV' : '',
+			parameters.clearcoatNormalMapMode === TriPlanarMapping ? '#define USE_CLEARCOAT_NORMALMAP_TRIPLANAR'
+				: parameters.clearcoatNormalMapMode === CylindricalMapping ? '#define USE_CLEARCOAT_NORMALMAP_CYLINDRICAL'
+					: parameters.clearcoatNormalMapMode === UVMapping ? '#define USE_CLEARCOAT_NORMALMAP_UV' : '',
 
 			parameters.dispersion ? '#define USE_DISPERSION' : '',
 
