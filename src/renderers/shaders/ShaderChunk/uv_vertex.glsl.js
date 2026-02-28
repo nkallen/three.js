@@ -10,12 +10,14 @@ export default /* glsl */`
 
 	vModelPosition = (texture3DMatrix * vec4(position.xyz, 1)).xyz;
 
-#endif
-#if defined( USE_TRIPLANAR )
+	#ifdef USE_BATCHING
 
-	vModelNormal = normal.xyz;
+		vModelPosition = (batchingMatrix * vec4(vModelPosition, 1)).xyz;
+
+	#endif
 
 #endif
+
 #if defined( USE_MAP_UV )
 
 	vMapUv = ( mapTransform * vec3( MAP_UV, 1 ) ).xy;
