@@ -500,8 +500,8 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.bumpMap ? '#define USE_BUMPMAP' : '',
 			parameters.normalMap ? '#define USE_NORMALMAP' : '',
 			parameters.normalMapMode === TriPlanarMapping ? '#define USE_NORMALMAP_TRIPLANAR' : parameters.normalMapMode === CylindricalMapping ? '#define USE_NORMALMAP_CYLINDRICAL' : parameters.normalMapMode === UVMapping ? '#define USE_NORMALMAP_UV' : '',
-			parameters.normalMapObjectSpace && [UVMapping, CylindricalMapping].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_OBJECTSPACE' : '',
-			parameters.normalMapTangentSpace && [UVMapping, CylindricalMapping].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_TANGENTSPACE' : '',
+			parameters.normalMapObjectSpace && [ UVMapping, CylindricalMapping ].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_OBJECTSPACE' : '',
+			parameters.normalMapTangentSpace && [ UVMapping, CylindricalMapping ].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_TANGENTSPACE' : '',
 			parameters.displacementMap ? '#define USE_DISPLACEMENTMAP' : '',
 			parameters.emissiveMap ? '#define USE_EMISSIVEMAP' : '',
 
@@ -511,9 +511,9 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.clearcoatMap ? '#define USE_CLEARCOATMAP' : '',
 			parameters.clearcoatRoughnessMap ? '#define USE_CLEARCOAT_ROUGHNESSMAP' : '',
 			parameters.clearcoatNormalMap ? '#define USE_CLEARCOAT_NORMALMAP' : '',
-			parameters.clearcoatNormalMapMode === TriPlanarMapping ? '#define USE_CLEARCOAT_NORMALMAP_TRIPLANAR' 
-      : parameters.clearcoatNormalMapMode === CylindricalMapping ? '#define USE_CLEARCOAT_NORMALMAP_CYLINDRICAL'
-      : parameters.clearcoatNormalMapMode === UVMapping ? '#define USE_CLEARCOAT_NORMALMAP_UV' : '',
+			parameters.clearcoatNormalMapMode === TriPlanarMapping ? '#define USE_CLEARCOAT_NORMALMAP_TRIPLANAR'
+				: parameters.clearcoatNormalMapMode === CylindricalMapping ? '#define USE_CLEARCOAT_NORMALMAP_CYLINDRICAL'
+					: parameters.clearcoatNormalMapMode === UVMapping ? '#define USE_CLEARCOAT_NORMALMAP_UV' : '',
 
 			parameters.iridescenceMap ? '#define USE_IRIDESCENCEMAP' : '',
 			parameters.iridescenceThicknessMap ? '#define USE_IRIDESCENCE_THICKNESSMAP' : '',
@@ -707,8 +707,8 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.bumpMap ? '#define USE_BUMPMAP' : '',
 			parameters.normalMap ? '#define USE_NORMALMAP' : '',
 			parameters.normalMapMode === TriPlanarMapping ? '#define USE_NORMALMAP_TRIPLANAR' : parameters.normalMapMode === CylindricalMapping ? '#define USE_NORMALMAP_CYLINDRICAL' : parameters.normalMapMode === UVMapping ? '#define USE_NORMALMAP_UV' : '',
-			parameters.normalMapObjectSpace && [UVMapping, CylindricalMapping].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_OBJECTSPACE' : '',
-			parameters.normalMapTangentSpace && [UVMapping, CylindricalMapping].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_TANGENTSPACE' : '',
+			parameters.normalMapObjectSpace && [ UVMapping, CylindricalMapping ].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_OBJECTSPACE' : '',
+			parameters.normalMapTangentSpace && [ UVMapping, CylindricalMapping ].includes( parameters.normalMapMode ) ? '#define USE_NORMALMAP_TANGENTSPACE' : '',
 			parameters.emissiveMap ? '#define USE_EMISSIVEMAP' : '',
 
 			parameters.anisotropy ? '#define USE_ANISOTROPY' : '',
@@ -718,9 +718,9 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.clearcoatMap ? '#define USE_CLEARCOATMAP' : '',
 			parameters.clearcoatRoughnessMap ? '#define USE_CLEARCOAT_ROUGHNESSMAP' : '',
 			parameters.clearcoatNormalMap ? '#define USE_CLEARCOAT_NORMALMAP' : '',
-			parameters.clearcoatNormalMapMode === TriPlanarMapping ? '#define USE_CLEARCOAT_NORMALMAP_TRIPLANAR' 
-      : parameters.clearcoatNormalMapMode === CylindricalMapping ? '#define USE_CLEARCOAT_NORMALMAP_CYLINDRICAL'
-      : parameters.clearcoatNormalMapMode === UVMapping ? '#define USE_CLEARCOAT_NORMALMAP_UV' : '',
+			parameters.clearcoatNormalMapMode === TriPlanarMapping ? '#define USE_CLEARCOAT_NORMALMAP_TRIPLANAR'
+				: parameters.clearcoatNormalMapMode === CylindricalMapping ? '#define USE_CLEARCOAT_NORMALMAP_CYLINDRICAL'
+					: parameters.clearcoatNormalMapMode === UVMapping ? '#define USE_CLEARCOAT_NORMALMAP_UV' : '',
 
 			parameters.dispersion ? '#define USE_DISPERSION' : '',
 

@@ -64,26 +64,34 @@ float faceDirection = gl_FrontFacing ? 1.0 : - 1.0;
 
 #ifdef USE_CLEARCOAT_NORMALMAP
 
-	#ifdef USE_TANGENT
+	#if !defined( USE_CLEARCOAT_NORMALMAP_TRIPLANAR )
 
-		mat3 tbn2 = mat3( normalize( vTangent ), normalize( vBitangent ), normal );
+		#ifdef USE_TANGENT
 
-  #elif defined( USE_CLEARCOAT_NORMALMAP_CYLINDRICAL )
+			mat3 tbn2 = mat3( normalize( vTangent ), normalize( vBitangent ), normal );
 
-    vec3 tangent2 = normalize(cross(normal, mat3(modelViewMatrix) * transpose(mat3(texture3DMatrix)) * vec3(0, 1, 0)));
-    vec3 bitangent2 = cross(tangent2, normal);
-  	mat3 tbn2 = mat3(tangent2, bitangent2, normal);
+		#elif defined( USE_CLEARCOAT_NORMALMAP_CYLINDRICAL )
 
-	#elif defined( USE_CLEARCOAT_NORMALMAP_UV )
+			vec3 tangent2 = normalize(cross(normal, mat3(modelViewMatrix) * transpose(mat3(texture3DMatrix)) * vec3(0, 1, 0)));
+			vec3 bitangent2 = cross(tangent2, normal);
+			mat3 tbn2 = mat3(tangent2, bitangent2, normal);
 
-		mat3 tbn2 = getTangentFrame( - vViewPosition, normal, vClearcoatNormalMapUv );
+		#elif defined( USE_CLEARCOAT_NORMALMAP_UV )
 
-	#endif
+			mat3 tbn2 = getTangentFrame( - vViewPosition, normal, vClearcoatNormalMapUv );
 
-	#if defined( DOUBLE_SIDED ) && ! defined( FLAT_SHADED )
+		#else
 
-		tbn2[0] *= faceDirection;
-		tbn2[1] *= faceDirection;
+			mat3 tbn2 = getTangentFrame( - vViewPosition, normal, vUv );
+
+		#endif
+
+		#if defined( DOUBLE_SIDED ) && ! defined( FLAT_SHADED )
+
+			tbn2[0] *= faceDirection;
+			tbn2[1] *= faceDirection;
+
+		#endif
 
 	#endif
 

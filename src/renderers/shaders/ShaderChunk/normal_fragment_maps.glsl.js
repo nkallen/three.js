@@ -4,6 +4,18 @@ export default /* glsl */`
 
 	normal = normalize(normalMatrix * transpose(mat3(texture3DMatrix)) * texture2DTriplanarNormal( normalMap, normalMapTransform, normalScale, normalize(mat3(texture3DMatrix) * vModelNormal.xyz), triplanarCoords, triplanarWeights ));
 
+	#ifdef FLIP_SIDED
+
+		normal = - normal;
+
+	#endif
+
+	#ifdef DOUBLE_SIDED
+
+		normal = normal * faceDirection;
+
+	#endif
+
 #elif defined( USE_NORMALMAP_OBJECTSPACE )
 
 	normal = texture2D( normalMap, vNormalMapUv ).xyz * 2.0 - 1.0; // overrides both flatShading and attribute normals

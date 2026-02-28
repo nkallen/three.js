@@ -48,6 +48,7 @@ function WebGLPrograms( renderer, environments, extensions, capabilities, bindin
 	}
 
 	function getParameters( material, lights, shadows, scene, object ) {
+
 		const fog = scene.fog;
 		const geometry = object.geometry;
 		const environment = ( material.isMeshStandardMaterial || material.isMeshLambertMaterial || material.isMeshPhongMaterial ) ? scene.environment : null;
@@ -452,7 +453,7 @@ function WebGLPrograms( renderer, environments, extensions, capabilities, bindin
 		array.push( parameters.anisotropyMapUv );
 		array.push( parameters.clearcoatMapUv );
 		array.push( parameters.clearcoatNormalMapUv );
-		array.push( parameters.clearcoatNormalMapMode);
+		array.push( parameters.clearcoatNormalMapMode );
 		array.push( parameters.clearcoatRoughnessMapUv );
 		array.push( parameters.iridescenceMapUv );
 		array.push( parameters.iridescenceThicknessMapUv );
