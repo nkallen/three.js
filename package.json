@@ -1,6 +1,6 @@
 {
-  "name": "three",
-  "version": "0.183.2",
+  "name": "@plastic-software/three",
+  "version": "0.183.3",
   "description": "JavaScript 3D library",
   "type": "module",
   "main": "./build/three.cjs",

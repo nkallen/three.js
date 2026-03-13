@@ -2578,7 +2578,7 @@ class WebGLRenderer {
 			if ( object.isBatchedMesh ) {
 
 				p_uniforms.setOptional( _gl, object, 'batchingTexture' );
-				if ( objects._matricesTexture !== null ) {
+				if ( object._matricesTexture !== null ) {
 
 					p_uniforms.setValue( _gl, 'batchingTexture', object._matricesTexture, textures );
 
