@@ -4,14 +4,13 @@ import NodeBuilderState from './NodeBuilderState.js';
 import NodeMaterial from '../../../materials/nodes/NodeMaterial.js';
 import { cubeMapNode } from '../../../nodes/utils/CubeMapNode.js';
 import { NodeFrame, StackTrace } from '../../../nodes/Nodes.js';
-import { objectGroup, renderGroup, frameGroup, cubeTexture, texture, texture3D, vec3, fog, rangeFogFactor, densityFogFactor, reference, pmremTexture, screenUV } from '../../../nodes/TSL.js';
+import { renderGroup, cubeTexture, texture, fog, rangeFogFactor, densityFogFactor, reference, pmremTexture, screenUV } from '../../../nodes/TSL.js';
 import { builtin } from '../../../nodes/accessors/BuiltinNode.js';
 
 import { CubeUVReflectionMapping, EquirectangularReflectionMapping, EquirectangularRefractionMapping } from '../../../constants.js';
 import { hashArray } from '../../../nodes/core/NodeUtils.js';
 import { error } from '../../../utils.js';
 
-const _outputNodeMap = new WeakMap();
 const _chainKeys = [];
 const _cacheKeyValues = [];
 
@@ -77,6 +76,22 @@ class NodeManager extends DataMap {
 		this.groupsData = new ChainMap();
 
 		/**
+		 * Queue for pending async builds to limit concurrent compilation.
+		 *
+		 * @private
+		 * @type {Array<Function>}
+		 */
+		this._buildQueue = [];
+
+		/**
+		 * Whether an async build is currently in progress.
+		 *
+		 * @private
+		 * @type {boolean}
+		 */
+		this._buildInProgress = false;
+
+		/**
 		 * A cache for managing node objects of
 		 * scene properties like fog or environments.
 		 *
@@ -95,51 +110,6 @@ class NodeManager extends DataMap {
 	updateGroup( nodeUniformsGroup ) {
 
 		const groupNode = nodeUniformsGroup.groupNode;
-		const name = groupNode.name;
-
-		// objectGroup is always updated
-
-		if ( name === objectGroup.name ) return true;
-
-		// renderGroup is updated once per render/compute call
-
-		if ( name === renderGroup.name ) {
-
-			const uniformsGroupData = this.get( nodeUniformsGroup );
-			const renderId = this.nodeFrame.renderId;
-
-			if ( uniformsGroupData.renderId !== renderId ) {
-
-				uniformsGroupData.renderId = renderId;
-
-				return true;
-
-			}
-
-			return false;
-
-		}
-
-		// frameGroup is updated once per frame
-
-		if ( name === frameGroup.name ) {
-
-			const uniformsGroupData = this.get( nodeUniformsGroup );
-			const frameId = this.nodeFrame.frameId;
-
-			if ( uniformsGroupData.frameId !== frameId ) {
-
-				uniformsGroupData.frameId = frameId;
-
-				return true;
-
-			}
-
-			return false;
-
-		}
-
-		// other groups are updated just when groupNode.needsUpdate is true
 
 		_chainKeys[ 0 ] = groupNode;
 		_chainKeys[ 1 ] = nodeUniformsGroup;
@@ -175,12 +145,43 @@ class NodeManager extends DataMap {
 	}
 
 	/**
+	 * Creates a node builder configured for the given render object and material.
+	 *
+	 * @private
+	 * @param {RenderObject} renderObject - The render object.
+	 * @param {Material} material - The material to use.
+	 * @return {NodeBuilder} The configured node builder.
+	 */
+	_createNodeBuilder( renderObject, material ) {
+
+		const nodeBuilder = this.backend.createNodeBuilder( renderObject.object, this.renderer );
+		nodeBuilder.scene = renderObject.scene;
+		nodeBuilder.material = material;
+		nodeBuilder.camera = renderObject.camera;
+		nodeBuilder.context.material = material;
+		nodeBuilder.lightsNode = renderObject.lightsNode;
+		nodeBuilder.environmentNode = this.getEnvironmentNode( renderObject.scene );
+		nodeBuilder.fogNode = this.getFogNode( renderObject.scene );
+		nodeBuilder.clippingContext = renderObject.clippingContext;
+
+		if ( this.renderer.getOutputRenderTarget() ? this.renderer.getOutputRenderTarget().multiview : false ) {
+
+			nodeBuilder.enableMultiview();
+
+		}
+
+		return nodeBuilder;
+
+	}
+
+	/**
 	 * Returns a node builder state for the given render object.
 	 *
 	 * @param {RenderObject} renderObject - The render object.
-	 * @return {NodeBuilderState} The node builder state.
+	 * @param {boolean} [useAsync=false] - Whether to use async build with yielding.
+	 * @return {NodeBuilderState|Promise<NodeBuilderState>} The node builder state (or Promise if async).
 	 */
-	getForRender( renderObject ) {
+	getForRender( renderObject, useAsync = false ) {
 
 		const renderObjectData = this.get( renderObject );
 
@@ -196,20 +197,37 @@ class NodeManager extends DataMap {
 
 			if ( nodeBuilderState === undefined ) {
 
-				const createNodeBuilder = ( material ) => {
+				const buildNodeBuilder = async () => {
 
-					const nodeBuilder = this.backend.createNodeBuilder( renderObject.object, this.renderer );
-					nodeBuilder.scene = renderObject.scene;
-					nodeBuilder.material = material;
-					nodeBuilder.camera = renderObject.camera;
-					nodeBuilder.context.material = material;
-					nodeBuilder.lightsNode = renderObject.lightsNode;
-					nodeBuilder.environmentNode = this.getEnvironmentNode( renderObject.scene );
-					nodeBuilder.fogNode = this.getFogNode( renderObject.scene );
-					nodeBuilder.clippingContext = renderObject.clippingContext;
-					if ( this.renderer.getOutputRenderTarget() ? this.renderer.getOutputRenderTarget().multiview : false ) {
+					let nodeBuilder = this._createNodeBuilder( renderObject, renderObject.material );
 
-						nodeBuilder.enableMultiview();
+					try {
+
+						if ( useAsync ) {
+
+							await nodeBuilder.buildAsync();
+
+						} else {
+
+							nodeBuilder.build();
+
+						}
+
+					} catch ( e ) {
+
+						nodeBuilder = this._createNodeBuilder( renderObject, new NodeMaterial() );
+
+						if ( useAsync ) {
+
+							await nodeBuilder.buildAsync();
+
+						} else {
+
+							nodeBuilder.build();
+
+						}
+
+						error( 'TSL: ' + e );
 
 					}
 
@@ -217,34 +235,52 @@ class NodeManager extends DataMap {
 
 				};
 
-				let nodeBuilder = createNodeBuilder( renderObject.material );
+				if ( useAsync ) {
 
-				try {
+					return buildNodeBuilder().then( ( nodeBuilder ) => {
 
-					nodeBuilder.build();
+						nodeBuilderState = this._createNodeBuilderState( nodeBuilder );
+						nodeBuilderCache.set( cacheKey, nodeBuilderState );
+						nodeBuilderState.usedTimes ++;
+						renderObjectData.nodeBuilderState = nodeBuilderState;
 
-				} catch ( e ) {
+						return nodeBuilderState;
 
-					nodeBuilder = createNodeBuilder( new NodeMaterial() );
-					nodeBuilder.build();
+					} );
 
-					let stackTrace = e.stackTrace;
+				} else {
 
-					if ( ! stackTrace && e.stack ) {
+					// Synchronous path - call buildNodeBuilder but don't await
+					let nodeBuilder = this._createNodeBuilder( renderObject, renderObject.material );
 
-						// Capture stack trace for JavaScript errors
+					try {
 
-						stackTrace = new StackTrace( e.stack );
+						nodeBuilder.build();
+
+					} catch ( e ) {
+
+						nodeBuilder = this._createNodeBuilder( renderObject, new NodeMaterial() );
+						nodeBuilder.build();
+
+						let stackTrace = e.stackTrace;
+
+						if ( ! stackTrace && e.stack ) {
+
+							// Capture stack trace for JavaScript errors
+
+							stackTrace = new StackTrace( e.stack );
+
+						}
+
+						error( 'TSL: ' + e, stackTrace );
 
 					}
 
-					error( 'TSL: ' + e, stackTrace );
+					nodeBuilderState = this._createNodeBuilderState( nodeBuilder );
+
+					nodeBuilderCache.set( cacheKey, nodeBuilderState );
 
 				}
-
-				nodeBuilderState = this._createNodeBuilderState( nodeBuilder );
-
-				nodeBuilderCache.set( cacheKey, nodeBuilderState );
 
 			}
 
@@ -259,6 +295,114 @@ class NodeManager extends DataMap {
 	}
 
 	/**
+	 * Async version of getForRender() that yields to main thread during build.
+	 * Use this in compileAsync() to prevent blocking the main thread.
+	 *
+	 * @param {RenderObject} renderObject - The render object.
+	 * @return {Promise<NodeBuilderState>} A promise that resolves to the node builder state.
+	 */
+	getForRenderAsync( renderObject ) {
+
+		const result = this.getForRender( renderObject, true );
+
+		// Ensure we always return a Promise (cache hit returns nodeBuilderState directly)
+		if ( result.then ) {
+
+			return result;
+
+		}
+
+		return Promise.resolve( result );
+
+	}
+
+	/**
+	 * Returns nodeBuilderState if ready, null if pending async build.
+	 * Queues async build on first call for cache miss.
+	 * Use this in render() path to enable non-blocking compilation.
+	 *
+	 * @param {RenderObject} renderObject - The render object.
+	 * @return {?NodeBuilderState} The node builder state, or null if still building.
+	 */
+	getForRenderDeferred( renderObject ) {
+
+		const renderObjectData = this.get( renderObject );
+
+		// Already built for this renderObject
+		if ( renderObjectData.nodeBuilderState !== undefined ) {
+
+			return renderObjectData.nodeBuilderState;
+
+		}
+
+		// Check cache with stable key
+		const cacheKey = this.getForRenderCacheKey( renderObject );
+		const nodeBuilderState = this.nodeBuilderCache.get( cacheKey );
+
+		if ( nodeBuilderState !== undefined ) {
+
+			// Cache hit - use it
+			nodeBuilderState.usedTimes ++;
+			renderObjectData.nodeBuilderState = nodeBuilderState;
+			return nodeBuilderState;
+
+		}
+
+		// Cache miss - check if async build already queued
+		if ( renderObjectData.pendingBuild !== true ) {
+
+			// Mark as pending and add to build queue
+			renderObjectData.pendingBuild = true;
+
+			this._buildQueue.push( () => {
+
+				return this.getForRenderAsync( renderObject ).then( () => {
+
+					renderObjectData.pendingBuild = false;
+
+				} );
+
+			} );
+
+			// Start processing queue if not already running
+			this._processBuildQueue();
+
+		}
+
+		return null; // Not ready
+
+	}
+
+	/**
+	 * Processes the build queue one item at a time.
+	 * This ensures builds don't all run simultaneously and freeze the main thread.
+	 *
+	 * @private
+	 */
+	_processBuildQueue() {
+
+		if ( this._buildInProgress || this._buildQueue.length === 0 ) {
+
+			return;
+
+		}
+
+		this._buildInProgress = true;
+
+		const buildFn = this._buildQueue.shift();
+
+		buildFn().then( () => {
+
+			this._buildInProgress = false;
+
+			// Process next item in queue
+			this._processBuildQueue();
+
+		} );
+
+	}
+
+	/**
 	 * Deletes the given object from the internal data map
 	 *
 	 * @param {any} object - The object to delete.
@@ -269,11 +413,16 @@ class NodeManager extends DataMap {
 		if ( object.isRenderObject ) {
 
 			const nodeBuilderState = this.get( object ).nodeBuilderState;
-			nodeBuilderState.usedTimes --;
 
-			if ( nodeBuilderState.usedTimes === 0 ) {
+			if ( nodeBuilderState !== undefined ) {
 
-				this.nodeBuilderCache.delete( this.getForRenderCacheKey( object ) );
+				nodeBuilderState.usedTimes --;
+
+				if ( nodeBuilderState.usedTimes === 0 ) {
+
+					this.nodeBuilderCache.delete( this.getForRenderCacheKey( object ) );
+
+				}
 
 			}
 
@@ -705,21 +854,6 @@ class NodeManager extends DataMap {
 	}
 
 	/**
-	 * Checks if the output configuration (tone mapping and color space) for
-	 * the given target has changed.
-	 *
-	 * @param {Texture} outputTarget - The output target.
-	 * @return {boolean} Whether the output configuration has changed or not.
-	 */
-	hasOutputChange( outputTarget ) {
-
-		const cacheKey = _outputNodeMap.get( outputTarget );
-
-		return cacheKey !== this.getOutputCacheKey();
-
-	}
-
-	/**
 	 * Returns a node that represents the output configuration (tone mapping and
 	 * color space) for the current target.
 	 *
@@ -729,13 +863,10 @@ class NodeManager extends DataMap {
 	getOutputNode( outputTarget ) {
 
 		const renderer = this.renderer;
-		const cacheKey = this.getOutputCacheKey();
 
 		const output = outputTarget.isArrayTexture ?
-			texture3D( outputTarget, vec3( screenUV, builtin( 'gl_ViewID_OVR' ) ) ).renderOutput( renderer.toneMapping, renderer.currentColorSpace ) :
+			texture( outputTarget, screenUV ).depth( builtin( 'gl_ViewID_OVR' ) ).renderOutput( renderer.toneMapping, renderer.currentColorSpace ) :
 			texture( outputTarget, screenUV ).renderOutput( renderer.toneMapping, renderer.currentColorSpace );
-
-		_outputNodeMap.set( outputTarget, cacheKey );
 
 		return output;
 
@@ -802,7 +933,7 @@ class NodeManager extends DataMap {
 
 	/**
 	 * Triggers the call of `update()` methods
-	 * for all nodes of the given compute node.
+	 * for all nodes of the given render object.
 	 *
 	 * @param {RenderObject} renderObject - The render object.
 	 */

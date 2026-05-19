@@ -15,9 +15,10 @@ class Pipelines extends DataMap {
 	 * Constructs a new pipeline management component.
 	 *
 	 * @param {Backend} backend - The renderer's backend.
-	 * @param {Nodes} nodes - Renderer component for managing nodes related logic.
+	 * @param {NodeManager} nodes - Renderer component for managing nodes related logic.
+	 * @param {Info} info - Renderer component for managing metrics and monitoring data.
 	 */
-	constructor( backend, nodes ) {
+	constructor( backend, nodes, info ) {
 
 		super();
 
@@ -31,9 +32,16 @@ class Pipelines extends DataMap {
 		/**
 		 * Renderer component for managing nodes related logic.
 		 *
-		 * @type {Nodes}
+		 * @type {NodeManager}
 		 */
 		this.nodes = nodes;
+
+		/**
+		 * Renderer component for managing metrics and monitoring data.
+		 *
+		 * @type {Info}
+		 */
+		this.info = info;
 
 		/**
 		 * A references to the bindings management component.
@@ -108,6 +116,7 @@ class Pipelines extends DataMap {
 				this.programs.compute.set( nodeBuilderState.computeShader, stageCompute );
 
 				backend.createProgram( stageCompute );
+				this.info.createProgram( stageCompute );
 
 			}
 
@@ -184,6 +193,7 @@ class Pipelines extends DataMap {
 				this.programs.vertex.set( nodeBuilderState.vertexShader, stageVertex );
 
 				backend.createProgram( stageVertex );
+				this.info.createProgram( stageVertex );
 
 			}
 
@@ -197,6 +207,7 @@ class Pipelines extends DataMap {
 				this.programs.fragment.set( nodeBuilderState.fragmentShader, stageFragment );
 
 				backend.createProgram( stageFragment );
+				this.info.createProgram( stageFragment );
 
 			}
 
@@ -231,6 +242,26 @@ class Pipelines extends DataMap {
 		}
 
 		return data.pipeline;
+
+	}
+
+	/**
+	 * Checks if the render pipeline for the given render object is ready for drawing.
+	 * Returns false if the GPU pipeline is still being compiled asynchronously.
+	 *
+	 * @param {RenderObject} renderObject - The render object.
+	 * @return {boolean} True if the pipeline is ready for drawing.
+	 */
+	isReady( renderObject ) {
+
+		const data = this.get( renderObject );
+		const pipeline = data.pipeline;
+
+		if ( pipeline === undefined ) return false;
+
+		const pipelineData = this.backend.get( pipeline );
+
+		return pipelineData.pipeline !== undefined && pipelineData.pipeline !== null;
 
 	}
 
@@ -427,6 +458,8 @@ class Pipelines extends DataMap {
 		const stage = program.stage;
 
 		this.programs[ stage ].delete( code );
+
+		this.info.destroyProgram( program );
 
 	}
 
