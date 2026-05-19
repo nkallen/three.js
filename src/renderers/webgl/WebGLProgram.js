@@ -483,6 +483,7 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.batching ? '#define USE_BATCHING' : '',
 			parameters.batchingMatrix ? '#define USE_BATCHING_MATRIX' : '',
 			parameters.batchingColor ? '#define USE_BATCHING_COLOR' : '',
+			parameters.normalOctahedral ? '#define USE_OCTAHEDRAL_NORMALS' : '',
 			parameters.instancing ? '#define USE_INSTANCING' : '',
 			parameters.instancingColor ? '#define USE_INSTANCING_COLOR' : '',
 			parameters.instancingMorph ? '#define USE_INSTANCING_MORPH' : '',

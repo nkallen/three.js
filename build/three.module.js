@@ -309,13 +309,13 @@ var aomap_fragment = "#ifdef USE_AOMAP\n  #ifdef USE_AOMAP_TRIPLANAR\n\t\tfloat 
 
 var aomap_pars_fragment = "#ifdef USE_AOMAP\n\tuniform sampler2D aoMap;\n\tuniform float aoMapIntensity;\n#endif";
 
-var batching_pars_vertex = "#ifdef USE_BATCHING_MATRIX\n\t#if ! defined( GL_ANGLE_multi_draw )\n\t#define gl_DrawID _gl_DrawID\n\tuniform int _gl_DrawID;\n\t#endif\n\tuniform highp sampler2D batchingTexture;\n\tuniform highp usampler2D batchingIdTexture;\n\tmat4 getBatchingMatrix( const in int i ) {\n\t\tint size = textureSize( batchingTexture, 0 ).x;\n\t\tint j = int( i ) * 4;\n\t\tint x = j % size;\n\t\tint y = j / size;\n\t\tvec4 v1 = texelFetch( batchingTexture, ivec2( x, y ), 0 );\n\t\tvec4 v2 = texelFetch( batchingTexture, ivec2( x + 1, y ), 0 );\n\t\tvec4 v3 = texelFetch( batchingTexture, ivec2( x + 2, y ), 0 );\n\t\tvec4 v4 = texelFetch( batchingTexture, ivec2( x + 3, y ), 0 );\n\t\treturn mat4( v1, v2, v3, v4 );\n\t}\n\tfloat getIndirectIndex( const in int i ) {\n\t\tint size = textureSize( batchingIdTexture, 0 ).x;\n\t\tint x = i % size;\n\t\tint y = i / size;\n\t\treturn float( texelFetch( batchingIdTexture, ivec2( x, y ), 0 ).r );\n\t}\n#endif\n#ifdef USE_BATCHING_COLOR\n\tuniform sampler2D batchingColorTexture;\n\tvec4 getBatchingColor( const in float i ) {\n\t\tint size = textureSize( batchingColorTexture, 0 ).x;\n\t\tint j = int( i );\n\t\tint x = j % size;\n\t\tint y = j / size;\n\t\treturn texelFetch( batchingColorTexture, ivec2( x, y ), 0 );\n\t}\n#endif";
+var batching_pars_vertex = "#ifdef USE_OCTAHEDRAL_NORMALS\n\tattribute vec2 normalOctahedral;\n\tvec3 decodeOctahedralNormal( vec2 value ) {\n\t\tvec3 normal = vec3( value, 1.0 - abs( value.x ) - abs( value.y ) );\n\t\tif ( normal.z < 0.0 ) {\n\t\t\tnormal.xy = ( 1.0 - abs( normal.yx ) ) * vec2( normal.x >= 0.0 ? 1.0 : - 1.0, normal.y >= 0.0 ? 1.0 : - 1.0 );\n\t\t}\n\t\treturn normalize( normal );\n\t}\n#endif\n#ifdef USE_BATCHING_MATRIX\n\t#if ! defined( GL_ANGLE_multi_draw )\n\t#define gl_DrawID _gl_DrawID\n\tuniform int _gl_DrawID;\n\t#endif\n\tuniform highp sampler2D batchingTexture;\n\tuniform highp usampler2D batchingIdTexture;\n\tmat4 getBatchingMatrix( const in int i ) {\n\t\tint size = textureSize( batchingTexture, 0 ).x;\n\t\tint j = int( i ) * 4;\n\t\tint x = j % size;\n\t\tint y = j / size;\n\t\tvec4 v1 = texelFetch( batchingTexture, ivec2( x, y ), 0 );\n\t\tvec4 v2 = texelFetch( batchingTexture, ivec2( x + 1, y ), 0 );\n\t\tvec4 v3 = texelFetch( batchingTexture, ivec2( x + 2, y ), 0 );\n\t\tvec4 v4 = texelFetch( batchingTexture, ivec2( x + 3, y ), 0 );\n\t\treturn mat4( v1, v2, v3, v4 );\n\t}\n\tfloat getIndirectIndex( const in int i ) {\n\t\tint size = textureSize( batchingIdTexture, 0 ).x;\n\t\tint x = i % size;\n\t\tint y = i / size;\n\t\treturn float( texelFetch( batchingIdTexture, ivec2( x, y ), 0 ).r );\n\t}\n#endif\n#ifdef USE_BATCHING_COLOR\n\tuniform sampler2D batchingColorTexture;\n\tvec4 getBatchingColor( const in float i ) {\n\t\tint size = textureSize( batchingColorTexture, 0 ).x;\n\t\tint j = int( i );\n\t\tint x = j % size;\n\t\tint y = j / size;\n\t\treturn texelFetch( batchingColorTexture, ivec2( x, y ), 0 );\n\t}\n#endif";
 
 var batching_vertex = "#ifdef USE_BATCHING_MATRIX\n\tmat4 batchingMatrix = getBatchingMatrix( gl_DrawID );\n#elif defined ( USE_BATCHING )\n\tmat4 batchingMatrix = mat4( 1.0 );\n#endif";
 
 var begin_vertex = "vec3 transformed = vec3( position );\n#ifdef USE_ALPHAHASH\n\tvPosition = vec3( position );\n#endif";
 
-var beginnormal_vertex = "vec3 objectNormal = vec3( normal );\n#ifdef USE_TANGENT\n\tvec3 objectTangent = vec3( tangent.xyz );\n#endif";
+var beginnormal_vertex = "#ifdef USE_OCTAHEDRAL_NORMALS\n\tvec3 objectNormal = decodeOctahedralNormal( normalOctahedral );\n#else\n\tvec3 objectNormal = vec3( normal );\n#endif\n#ifdef USE_TANGENT\n\tvec3 objectTangent = vec3( tangent.xyz );\n#endif";
 
 var bsdfs = "float G_BlinnPhong_Implicit( ) {\n\treturn 0.25;\n}\nfloat D_BlinnPhong( const in float shininess, const in float dotNH ) {\n\treturn RECIPROCAL_PI * ( shininess * 0.5 + 1.0 ) * pow( dotNH, shininess );\n}\nvec3 BRDF_BlinnPhong( const in vec3 lightDir, const in vec3 viewDir, const in vec3 normal, const in vec3 specularColor, const in float shininess ) {\n\tvec3 halfDir = normalize( lightDir + viewDir );\n\tfloat dotNH = saturate( dot( normal, halfDir ) );\n\tfloat dotVH = saturate( dot( viewDir, halfDir ) );\n\tvec3 F = F_Schlick( specularColor, 1.0, dotVH );\n\tfloat G = G_BlinnPhong_Implicit( );\n\tfloat D = D_BlinnPhong( shininess, dotNH );\n\treturn F * ( G * D );\n} // validated";
 
@@ -6769,6 +6769,7 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			parameters.batching ? '#define USE_BATCHING' : '',
 			parameters.batchingMatrix ? '#define USE_BATCHING_MATRIX' : '',
 			parameters.batchingColor ? '#define USE_BATCHING_COLOR' : '',
+			parameters.normalOctahedral ? '#define USE_OCTAHEDRAL_NORMALS' : '',
 			parameters.instancing ? '#define USE_INSTANCING' : '',
 			parameters.instancingColor ? '#define USE_INSTANCING_COLOR' : '',
 			parameters.instancingMorph ? '#define USE_INSTANCING_MORPH' : '',
@@ -7609,6 +7610,8 @@ function WebGLPrograms( renderer, environments, extensions, capabilities, bindin
 
 		const HAS_ALPHAHASH = !! material.alphaHash;
 
+		const HAS_OCTAHEDRAL_NORMALS = object.geometry.attributes.normalOctahedral !== undefined;
+
 		const HAS_EXTENSIONS = !! material.extensions;
 
 		let toneMapping = NoToneMapping;
@@ -7644,6 +7647,7 @@ function WebGLPrograms( renderer, environments, extensions, capabilities, bindin
 			batching: IS_BATCHEDMESH,
 			batchingMatrix: IS_BATCHEDMESH && object._matricesTexture !== null,
 			batchingColor: IS_BATCHEDMESH && object._colorsTexture !== null,
+			normalOctahedral: HAS_OCTAHEDRAL_NORMALS,
 			instancing: IS_INSTANCEDMESH,
 			instancingColor: IS_INSTANCEDMESH && object.instanceColor !== null,
 			instancingMorph: IS_INSTANCEDMESH && object.morphTexture !== null,
@@ -7985,6 +7989,8 @@ function WebGLPrograms( renderer, environments, extensions, capabilities, bindin
 			_programLayers.enable( 21 );
 		if ( parameters.batchingMatrix )
 			_programLayers.enable( 22 );
+		if ( parameters.normalOctahedral )
+			_programLayers.enable( 23 );
 
 		array.push( _programLayers.mask );
 		_programLayers.disableAll();

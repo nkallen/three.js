@@ -1,4 +1,24 @@
 export default /* glsl */`
+#ifdef USE_OCTAHEDRAL_NORMALS
+
+	attribute vec2 normalOctahedral;
+
+	vec3 decodeOctahedralNormal( vec2 value ) {
+
+		vec3 normal = vec3( value, 1.0 - abs( value.x ) - abs( value.y ) );
+
+		if ( normal.z < 0.0 ) {
+
+			normal.xy = ( 1.0 - abs( normal.yx ) ) * vec2( normal.x >= 0.0 ? 1.0 : - 1.0, normal.y >= 0.0 ? 1.0 : - 1.0 );
+
+		}
+
+		return normalize( normal );
+
+	}
+
+#endif
+
 #ifdef USE_BATCHING_MATRIX
 	#if ! defined( GL_ANGLE_multi_draw )
 	#define gl_DrawID _gl_DrawID

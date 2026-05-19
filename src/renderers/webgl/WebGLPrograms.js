@@ -162,6 +162,8 @@ function WebGLPrograms( renderer, environments, extensions, capabilities, bindin
 
 		const HAS_ALPHAHASH = !! material.alphaHash;
 
+		const HAS_OCTAHEDRAL_NORMALS = object.geometry.attributes.normalOctahedral !== undefined;
+
 		const HAS_EXTENSIONS = !! material.extensions;
 
 		let toneMapping = NoToneMapping;
@@ -197,6 +199,7 @@ function WebGLPrograms( renderer, environments, extensions, capabilities, bindin
 			batching: IS_BATCHEDMESH,
 			batchingMatrix: IS_BATCHEDMESH && object._matricesTexture !== null,
 			batchingColor: IS_BATCHEDMESH && object._colorsTexture !== null,
+			normalOctahedral: HAS_OCTAHEDRAL_NORMALS,
 			instancing: IS_INSTANCEDMESH,
 			instancingColor: IS_INSTANCEDMESH && object.instanceColor !== null,
 			instancingMorph: IS_INSTANCEDMESH && object.morphTexture !== null,
@@ -538,6 +541,8 @@ function WebGLPrograms( renderer, environments, extensions, capabilities, bindin
 			_programLayers.enable( 21 );
 		if ( parameters.batchingMatrix )
 			_programLayers.enable( 22 );
+		if ( parameters.normalOctahedral )
+			_programLayers.enable( 23 );
 
 		array.push( _programLayers.mask );
 		_programLayers.disableAll();
