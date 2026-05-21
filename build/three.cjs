@@ -67280,6 +67280,7 @@ function WebGLPrograms( renderer, environments, extensions, capabilities, bindin
 		const HAS_ALPHAHASH = !! material.alphaHash;
 
 		const HAS_OCTAHEDRAL_NORMALS = object.geometry.attributes.normalOctahedral !== undefined;
+		const HAS_VERTEX_NORMALS = geometry.attributes.normal !== undefined || HAS_OCTAHEDRAL_NORMALS;
 
 		const HAS_EXTENSIONS = !! material.extensions;
 
@@ -67423,7 +67424,7 @@ function WebGLPrograms( renderer, environments, extensions, capabilities, bindin
 			//
 
 			vertexTangents: !! geometry.attributes.tangent && ( HAS_NORMALMAP || HAS_ANISOTROPY ),
-			vertexNormals: !! geometry.attributes.normal,
+			vertexNormals: HAS_VERTEX_NORMALS,
 			vertexColors: material.vertexColors,
 			vertexAlphas: material.vertexColors === true && !! geometry.attributes.color && geometry.attributes.color.itemSize === 4,
 
@@ -67435,7 +67436,7 @@ function WebGLPrograms( renderer, environments, extensions, capabilities, bindin
 
 			flatShading: material.wireframe === false && (
 				material.flatShading === true ||
-				( geometry.attributes.normal === undefined && HAS_NORMALMAP === false &&
+				( HAS_VERTEX_NORMALS === false && HAS_NORMALMAP === false &&
 					( material.isMeshLambertMaterial || material.isMeshPhongMaterial || material.isMeshStandardMaterial || material.isMeshPhysicalMaterial )
 				)
 			),
